@@ -86,7 +86,6 @@ reg LAST_WRITE;
 //flags
 wire LAST;
 wire ROW_DONE;
-wire Y_DONE;
 
 //arithmetic
 wire [31:0] CHECK_LAST;
