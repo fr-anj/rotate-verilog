@@ -334,16 +334,16 @@ always @(posedge I_HCLK)
 	    IDLE:
 		row_0 <= 16'h0000;
 	    READ:
-		if (set_count == 6'h3f)
+		if ((set_count == 6'h08) && (height_count == 16'h0001))
 		    row_0 <= row_address;
 		else 
 		    row_0 <= row_0;
 	    WRITE:
-		if (LAST_WRITE)
-		    row_0 <= 16'h0000;
-		else 
-		    if (burst_count == 3'h7)
-			row_0 <= row_0 + WIDTH;
+		    if (burst_count == 3'h7) 
+			if ((set_count == 6'h3f) && (height_count == 16'h0007)) 
+			    row_0 <= row_0 - WIDTH;
+			else
+			    row_0 <= row_0 + WIDTH;
 		    else 
 			row_0 <= row_0;
 	endcase
