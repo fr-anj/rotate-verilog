@@ -311,13 +311,6 @@ always @(posedge I_HCLK)
 	endcase
 
 /******************************************************************
-*
-    *
-    *
-    *
-    *
-    *
-    *
 ******************************************************************/
 
 always @(posedge I_HCLK)
@@ -328,21 +321,9 @@ always @(posedge I_HCLK)
 	    IDLE:
 		col_0 <= 16'h0000;
 	    READ:
-		col_0 <= col_0;
+		col_0 <= col_address;
 	    WRITE:
-		if (LAST_WRITE)
-		    if (set_count == 6'h3f)
-			col_0 <= 16'h0000;
-		    else 
-			col_0 <= col_0;
-		else 
-		    if (ROW_DONE)
-			if (set_count == 6'h3f)
-			    col_0 <= col_0 + 24;
-			else 
-			    col_0 <= col_0;
-		    else
-			col_0 <= col_0;
+		col_0 <= col_0;
 	endcase
 	
 always @(posedge I_HCLK)
@@ -353,27 +334,18 @@ always @(posedge I_HCLK)
 	    IDLE:
 		row_0 <= 16'h0000;
 	    READ:
-		row_0 <= row_0;
+		if (set_count == 6'h3f)
+		    row_0 <= row_address;
+		else 
+		    row_0 <= row_0;
 	    WRITE:
 		if (LAST_WRITE)
-		    if (set_count == 6'h3f)
-			row_0 <= 16'h0000;
-		    else 
-			if (burst_count == 3'h7)
-			    row_0 <= row_0 + WIDTH;
-			else 
-			    row_0 <= row_0;
+		    row_0 <= 16'h0000;
 		else 
-		    if (ROW_DONE)
-			if (set_count == 6'h3f)
-			    row_0 <= 16'h0000;
-			else 
-			    row_0 <= row_0;
+		    if (burst_count == 3'h7)
+			row_0 <= row_0 + WIDTH;
 		    else 
-			if (burst_count == 3'h7)
-			    row_0 <= row_0 + WIDTH;
-			else
-			    row_0 <= row_0;
+			row_0 <= row_0;
 	endcase
 
 always @(posedge I_HCLK)
@@ -441,65 +413,6 @@ always @(posedge I_HCLK)
 			else 
 			    row_90 <= row_90;
 	endcase
-
-/*always @(*)
-    if (!I_HRESET_N)
-	col_write_start = 16'h0000;
-    else 
-	if (I_DIRECTION)
-	    if ((I_DEGREES == DEG_180) || (I_DEGREES == DEG_270))
-		col_write_start = (WDIV - 1) * 2'h3;
-	    else 
-		col_write_start = 16'h0000;
-	else 
-	    if ((I_DEGREES == DEG_180) || (I_DEGREES == DEG_90))
-		col_write_start = (WDIV - 1) * 2'h3;
-	    else 
-		col_write_start = 16'h0000;
-
-always @(*)
-    if (!I_HRESET_N)
-	row_write_start = 16'h0000;
-    else 
-	if (I_DIRECTION)
-	    if ((I_DEGREES == DEG_180) || (I_DEGREES == DEG_90))
-		row_write_start = (new_height - 1) * I_WIDTH;
-	    else 
-		row_write_start = 16'h0000;
-	else 
-	    if ((I_DEGREES == DEG_180) || (I_DEGREES == DEG_270))
-		row_write_start = (new_height - 1) * I_WIDTH;
-	    else 
-		row_write_start = 16'h0000;
-
-always @(posedge I_HCLK)
-    if (!I_HRESET_N)
-	col_write_address <= 16'h0000;
-    else 
-	case (next_state)
-	    READ:
-		col_write_address <= col_write_address;
-	    WRITE:
-		// TODO: something..
-	    default:
-		col_write_address <= 16'h0000;
-	endcase
-
-always @(posedge I_HCLK)
-    if (!I_HRESET_N)
-	row_write_address <= 16'h0000;
-    else 
-	case (next_state)
-	    IDLE:
-		row_write_address <= row_write_start;
-	    READ:
-		row_write_address <= row_write_address;
-	    WRITE:
-		// TODO: something..
-	    default:
-		row_write_address <= 16'h0000;
-	endcase
-*/
 
 always @(*)
     if (!I_HRESET_N)
