@@ -13,8 +13,8 @@ module core_set (
     output reg	 	O_BUSY,
     output reg [4:0] 	O_COUNT,
 
-    input [14:0] 	I_HEIGHT,
-    input [13:0] 	I_WIDTH,
+    input [15:0] 	I_HEIGHT,
+    input [15:0] 	I_WIDTH,
     input 		I_DIRECTION,
     input [2:0] 	I_DEGREES,
     input 		I_DMA_READY,
@@ -37,124 +37,78 @@ parameter 	DEG_0 	= 2'h0,
 		DEG_180 = 2'h2,
 		DEG_270 = 2'h3;
 
+//registers
+reg [15:0] new_height;
+reg [15:0] new_width;
+
 //counters
 reg [5:0] set_count; 	//count to 64 
 reg [2:0] burst_count; 	//count to 8	
-reg [15:0] height_count; //count to (I_HEIGHT - 1)
+reg [11:0] hdiv_count; 	//count to HDIV
+reg [11:0] wdiv_count; //count to WDIV
 
-//image registers
-reg [15:0] new_height;
-reg [15:0] new_width;
-wire [15:0] deficit_h;
-wire [15:0] deficit_w;
+//addresses
+reg [15:0] row; //read row
+reg [15:0] col; //read column
 
-//address manipulation
-reg [15:0] col_address;
-reg [15:0] row_address;
-/*
-reg [15:0] col_write_address;
-reg [15:0] row_write_address;
-reg [15:0] col_write_start;
-reg [15:0] row_write_start;
-reg [15:0] y_address;
-reg [15:0] x_address;
-*/
+//signals
+reg LAST_HDIV;
+reg LAST_WDIV;
 
-reg [15:0] col_0;
-reg [30:0] col_90;
-reg [30:0] col_180;
-reg [30:0] col_270;
-reg [30:0] row_0;
-reg [30:0] row_90;
-reg [30:0] row_180;
-reg [30:0] row_270;
-
-wire [30:0] col_90_start;
-wire [30:0] col_180_start;
-wire [30:0] col_270_start;
-wire [30:0] row_90_start;
-wire [30:0] row_180_start;
-wire [30:0] row_270_start;
-
-wire [31:0] out_0;
-wire [31:0] out_90;
-wire [31:0] out_180;
-wire [31:0] out_270;
-
-reg LAST_WRITE;
-
-//flags
-wire LAST;
-wire ROW_DONE;
-
-//arithmetic
-wire [31:0] CHECK_LAST;
-wire [31:0] TOTAL;
-wire [15:0] REM; 
-wire [14:0] HDIV;
-wire [13:0] WDIV;
+//height and width properties
+wire [16:0] HEIGHT;
+wire [16:0] WIDTH;
+wire [16:0] NEW_HEIGHT;
+wire [16:0] NEW_WIDTH;
+wire [11:0] HDIV;
+wire [11:0] WDIV;
 wire [2:0] HMOD;
 wire [2:0] WMOD;
-wire [15:0] WIDTH;
+wire [3:0] HDEFICIT;
+wire [3:0] WDEFICIT;
 
-//wire assign
-assign 	HDIV		= {I_HEIGHT[14:3],3'h0};
+//flags 
+wire STOP_ROT; 	//when input image is bigger than max
+wire LAST; 	//when last pixel set is processed 
+//wire LAST_HDIV; //when hdiv_count reaches HDIV - 1
+//wire LAST_WDIV; //when wdiv_count reaches WDIV - 1
 
-assign 	WDIV 		= {I_WIDTH[13:3],3'h0};
+assign HEIGHT = I_HEIGHT * 2'h3;
+assign WIDTH = I_WIDTH * 2'h3;
+assign NEW_HEIGHT = new_height * 2'h3;
+assign NEW_WIDTH = new_width * 2'h3;
 
-assign 	HMOD		= I_HEIGHT[2:0];
+assign HDIV = new_height[15:3];
+assign WDIV = new_width[15:3];
 
-assign 	WMOD		= I_WIDTH[2:0];
+assign HMOD = I_HEIGHT[2:0];
+assign WMOD = I_WIDTH[2:0];
 
-assign 	deficit_h 	= 16'h0008 - {13'h0000,I_HEIGHT[2:0]};
+assign HDEFICIT = 4'h8 - HMOD;
+assign WDEFICIT = 4'h8 - WMOD;
 
-assign 	deficit_w 	= 16'h0008 - {13'h0000,I_WIDTH[2:0]};
-
-//2016-01-25
-//assign 	ROW_DONE 	= (height_count == (I_HEIGHT - 1))? 1 : 0;
-assign 	ROW_DONE 	=  (height_count == (new_height - 1))? 1 : 0;
-
-//2016-01-25
-//assign 	TOTAL 		= I_HEIGHT * I_WIDTH * 2'h3;
-assign 	TOTAL 		= new_height * I_WIDTH * 2'h3;
-
-assign 	REM 		= WMOD * 2'h3;
-
-//2016-01-26
-//assign 	CHECK_LAST	= TOTAL - 24; 
-assign 	WIDTH 		= 2'h3 * I_WIDTH;
-
-assign 	CHECK_LAST	= ((WMOD == 3'h0) && (HMOD == 3'h0))? TOTAL - WIDTH: TOTAL - REM;
-
-assign 	LAST 		= (O_ADDR == CHECK_LAST)? 1 : 0;
-
-assign col_90_start 	= 31'h00000000;
-assign col_180_start 	= (WDIV - 1) * 8'h18;
-assign col_270_start 	= col_180_start;
-assign row_90_start 	= (I_HEIGHT - 4'h8) * I_WIDTH * 2'h3;
-assign row_180_start	= col_90_start;
-assign row_270_start	= 31'h00000000;
-
-wire [23:0] row_dec;
-
-assign row_dec = WIDTH * 4'hf;
-
-assign out_0 		= row_0 + col_0;
-assign out_90 		= row_90 + col_90;
-assign out_180 		= row_180 + col_180;
-assign out_270 		= row_270 + col_270;
+assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
+//assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
+//assign LAST_WDIV = (wdiv_count == WDIV - 1)? 1: 0;
+assign LAST = (LAST_HDIV && LAST_WDIV)? 1 : 0;
 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
-	LAST_WRITE <= 0;
+	LAST_HDIV <= 0;
     else 
-	if (next_state == IDLE)
-	    LAST_WRITE <= 0;
+	if ((hdiv_count == (HDIV - 1)) && (set_count == 6'h3e))
+	    LAST_HDIV <= 1;
 	else 
-	    if (LAST)
-		LAST_WRITE <= 1;
-	    else
-		LAST_WRITE <= LAST_WRITE;
+	    LAST_HDIV <= 0;
+
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	LAST_WDIV <= 0;
+    else 
+	if ((wdiv_count == (WDIV - 1)) && (set_count == 6'h3e))
+	    LAST_WDIV <= 1;
+	else 
+	    LAST_WDIV <= 0;
 
 //state transition
 always @(posedge I_HCLK)
@@ -170,26 +124,29 @@ always @(*)
     else 
 	case (curr_state)
 	    IDLE:
-		if (I_START)
-		    next_state = READ;
-		else
-		    next_state = IDLE;
+		if (STOP_ROT)
+		    next_state <= IDLE;
+		else 
+		    if (I_START)
+			next_state <= READ;
+		    else 
+			next_state <= IDLE;
 	    READ:
 		if (set_count == 6'h3f)
 		    next_state = WRITE;
 		else
 		    next_state = READ;
 	    WRITE:
-		if (!LAST_WRITE)
+		if (LAST)
 		    if (set_count == 6'h3f)
-			next_state = READ;
+			next_state <= IDLE;
 		    else 
-			next_state = WRITE;
+			next_state <= WRITE;
 		else 
 		    if (set_count == 6'h3f)
-			next_state = IDLE;
+			next_state <= READ;
 		    else 
-			next_state = WRITE;
+			next_state <= WRITE;
 	    default:
 		next_state = IDLE;
 	endcase
@@ -206,11 +163,11 @@ always @(*)
 	if ((I_HEIGHT & 16'h0007) == 16'h0000)
 	    new_height = I_HEIGHT;
 	else 
-	    new_height = I_HEIGHT + deficit_h;
+	    new_height = I_HEIGHT + HDEFICIT;
 	if ((I_WIDTH & 16'h0007) == 16'h0000)
 	    new_width = I_WIDTH;
 	else 
-	    new_width = I_WIDTH + deficit_w;
+	    new_width = I_WIDTH + WDEFICIT;
     end
 
 //count to 64
@@ -218,202 +175,131 @@ always @(posedge I_HCLK)
     if (!I_HRESET_N)
 	set_count <= 6'h00;
     else 
-	if (I_DMA_READY)
-	    set_count <= set_count + 1;
+	if (curr_state == IDLE)
+	    set_count <= 6'h00;
 	else 
-	    set_count <= set_count;
+	    if (I_DMA_READY)
+		set_count <= set_count + 1;
+	    else 
+		set_count <= set_count;
 
 //count to 8
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
 	burst_count <= 3'h0;
     else 
-	if (I_DMA_READY)
-	    burst_count <= burst_count + 1;
-	else 
-	    burst_count <= burst_count;
+	if (curr_state == IDLE)
+	    burst_count <= 3'h0;
+	else
+	    if (I_DMA_READY)
+		burst_count <= burst_count + 1;
+	    else 
+		burst_count <= burst_count;
 
-//count until it reaches I_HEIGHT - 1
+//count to HDIV
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
-	height_count <= 16'h0000;
+	hdiv_count <= 12'h000;
     else 
 	case (next_state)
 	    IDLE:
-		height_count <= 16'h0000;
+		hdiv_count <= 12'h000;
 	    READ:
-		if (ROW_DONE)
+		if (!LAST_HDIV)
+		    if (set_count == 6'h3f)
+			hdiv_count <= hdiv_count + 1;
+		    else 
+			hdiv_count <= hdiv_count;
+		else 
+		    if (set_count == 6'h3f)
+			hdiv_count <= 12'h000;
+		    else 
+			hdiv_count <= hdiv_count;
+	    WRITE:
+		hdiv_count <= hdiv_count;
+	endcase
+
+//count to WDIV
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	wdiv_count <= 12'h000;
+    else 
+	case (next_state)
+	    IDLE:
+		hdiv_count <= 12'h000;
+	    READ:
+		if (!LAST_WDIV)
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			wdiv_count <= wdiv_count + 1;
+		    else 
+			wdiv_count <= wdiv_count;
+		else 
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			wdiv_count <= 12'h000;
+		    else 
+			wdiv_count <= wdiv_count;
+	    WRITE:
+		wdiv_count <= wdiv_count;
+	endcase 
+		
+//*****************************************************//
+//*****************************************************//
+//*****************************************************//
+
+//current read row
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	row <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		row <= 16'h0000;
+	    READ:
+		if (!LAST_HDIV)
 		    if (burst_count == 3'h7)
-			height_count <= 16'h0000;
+			row <= row + WIDTH;
 		    else 
-			height_count <= height_count;
+			row <= row;
 		else 
-		    if (burst_count == 3'h7)
-			height_count <= height_count + 1;
+		    if (set_count <= 6'h3f)
+			row <= 16'h0000;
 		    else 
-			height_count <= height_count;
+			if (burst_count == 3'h7)
+			    row <= row + WIDTH;
+			else 
+			    row <= row;
 	    WRITE:
-		height_count <= height_count;
+		row <= row;
 	endcase
 
+//current read column 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
-	col_address <= 16'h0000;
-    else
-	case (next_state)
-	    IDLE:
-		col_address <= 16'h0000;
-	    READ:
-		if (LAST_WRITE)
-		    if (burst_count == 3'h7)
-			col_address <= 16'h0000;
-		    else 
-			col_address <= col_address;
-		else 
-		    if (ROW_DONE)
-			if (burst_count == 3'h7)
-			    col_address <= col_address + 24;
-			else 
-			    col_address <= col_address;
-		    else
-			col_address <= col_address;
-	    WRITE:
-		col_address <= col_address;
-	endcase
-	
-always @(posedge I_HCLK)
-    if (!I_HRESET_N)
-	row_address <= 16'h0000;
+	col <= 16'h0000;
     else 
 	case (next_state)
 	    IDLE:
-		row_address <= 16'h0000;
+		col <= 16'h0000;
 	    READ:
-		if (LAST_WRITE)
-		    if (burst_count == 3'h7)
-			row_address <= 16'h0000;
+		if (!LAST_WDIV)
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			col <= col + 24;
 		    else 
-			row_address <= row_address;
+			col <= col;
 		else 
-		    if (ROW_DONE)
-			if (burst_count == 3'h7)
-			    row_address <= 16'h0000;
-			else 
-			    row_address <= row_address;
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			col <= 16'h0000;
 		    else 
-			if (burst_count == 3'h7)
-			    row_address <= row_address + WIDTH;
-			else
-			    row_address <= row_address;
+			col <= col;
 	    WRITE:
-		row_address <= row_address;
+		col <= col;
 	endcase
 
-/******************************************************************
-******************************************************************/
+//*****************************************************//
+//*****************************************************//
+//*****************************************************//
 
-always @(posedge I_HCLK)
-    if (!I_HRESET_N)
-	col_0 <= 16'h0000;
-    else
-	case (next_state)
-	    IDLE:
-		col_0 <= 16'h0000;
-	    READ:
-		col_0 <= col_address;
-	    WRITE:
-		col_0 <= col_0;
-	endcase
-	
-always @(posedge I_HCLK)
-    if (!I_HRESET_N)
-	row_0 <= 16'h0000;
-    else 
-	case (next_state)
-	    IDLE:
-		row_0 <= 16'h0000;
-	    READ:
-		if ((set_count == 6'h08) && (height_count == 16'h0001))
-		    row_0 <= row_address;
-		else 
-		    row_0 <= row_0;
-	    WRITE:
-		    if (burst_count == 3'h7) 
-			if ((set_count == 6'h3f) && (height_count == 16'h0007)) 
-			    row_0 <= row_0 - WIDTH;
-			else
-			    row_0 <= row_0 + WIDTH;
-		    else 
-			row_0 <= row_0;
-	endcase
-
-always @(posedge I_HCLK)
-    if (!I_HRESET_N)
-	row_90 <= 16'h0000;
-    else 
-	case (next_state)
-	    IDLE:
-		row_90 <= row_90_start; 
-	    READ:
-		row_90 <= row_90;
-	    WRITE:
-		if (LAST_WRITE && set_count == 6'h3f)
-		    row_90 <= 16'h0000;
-		else 
-		    if ((col_90 == col_180_start) && (set_count == 6'h3f))
-			row_90 <= row_90 - row_dec;
-		    else 
-			if (burst_count == 3'h7)
-			    row_90 <= row_90 + WIDTH;
-			else 
-			    row_90 <= row_90;
-	endcase
-
-always @(posedge I_HCLK)
-    if (I_HRESET_N)
-	col_90 <= 16'h0000;
-    else 
-	case (next_state)
-	    IDLE:
-		col_90 <= col_90_start;
-	    READ:
-		col_90 <= col_90;
-	    WRITE:
-		if (LAST_WRITE && set_count == 6'h3f)
-		    col_90 <= 16'h0000;
-		else 
-		    if (ROW_DONE && set_count == 6'h3f)
-			col_90 <= col_90_start;
-		    else 
-			if (set_count == 6'h3f)
-			    col_90 <= col_90 + 24;
-			else 
-			    col_90 <= col_90;
-	endcase
-
-always @(posedge I_HCLK)
-    if (!I_HRESET_N)
-	row_90 <= 16'h0000;
-    else 
-	case (next_state)
-	    IDLE:
-		row_90 <= row_90_start; 
-	    READ:
-		row_90 <= row_90;
-	    WRITE:
-		if (LAST_WRITE && set_count == 6'h3f)
-		    row_90 <= 16'h0000;
-		else 
-		    if ((col_90 == col_180_start) && (set_count == 6'h3f))
-			row_90 <= row_90 - row_dec;
-		    else 
-			if (burst_count == 3'h7)
-			    row_90 <= row_90 + WIDTH;
-			else 
-			    row_90 <= row_90;
-	endcase
-
-always @(*)
+/*always @(*)
     if (!I_HRESET_N)
 	O_ADDR = 32'h00000000;
     else 
@@ -450,5 +336,5 @@ always @(*)
 	    default:
 		O_ADDR = O_ADDR;
 	endcase
-
+*/
 endmodule

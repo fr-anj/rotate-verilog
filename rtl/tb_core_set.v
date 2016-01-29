@@ -9,8 +9,8 @@ module tb_core_set();
     wire [4:0]	O_COUNT;
     //wire  	O_START;
 
-    reg [14:0] 	I_HEIGHT;
-    reg [13:0] 	I_WIDTH;
+    reg [15:0] 	I_HEIGHT;
+    reg [15:0] 	I_WIDTH;
     reg 	I_DIRECTION;
     reg [2:0] 	I_DEGREES;
     reg       	I_DMA_READY;
@@ -109,6 +109,33 @@ module tb_core_set();
 	begin
 	    I_WIDTH = 123;
 	    I_HEIGHT = 5;
+	    I_DIRECTION = 0;
+	    I_DEGREES = 1;
+	end
+
+    //start sequence
+    @(posedge I_HCLK)
+	I_HRESET_N <= 0;
+
+    @(posedge I_HCLK)
+	I_HRESET_N <= 1;
+
+    @(posedge I_HCLK)
+	    I_START <= 1;
+    
+    @(posedge I_HCLK)
+	I_START <= 0;
+
+    @(posedge I_HCLK)
+	I_DMA_READY <= 1;
+
+    #10000;
+    repeat(500) @(posedge I_HCLK);
+
+    @(posedge I_HCLK)
+	begin
+	    I_WIDTH = 32;
+	    I_HEIGHT = 24;
 	    I_DIRECTION = 0;
 	    I_DEGREES = 1;
 	end
