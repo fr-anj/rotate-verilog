@@ -16,7 +16,7 @@ module core_set (
     input [15:0] 	I_HEIGHT,
     input [15:0] 	I_WIDTH,
     input 		I_DIRECTION,
-    input [2:0] 	I_DEGREES,
+    input [1:0] 	I_DEGREES,
     input 		I_DMA_READY,
 
     input 		I_START,
@@ -59,6 +59,9 @@ reg [15:0] col180; 	//read column
 reg [15:0] row270; 	//read row
 reg [15:0] col270; 	//read column
 
+//address decrement or increment
+reg [16:0] dec90; 	//decrement 
+
 //signals
 reg LAST_HDIV;
 reg LAST_WDIV;
@@ -67,8 +70,8 @@ reg FIRST;
 //height and width properties
 wire [16:0] HEIGHT;
 wire [16:0] WIDTH;
-wire [16:0] NEW_HEIGHT;
-wire [16:0] NEW_WIDTH;
+wire [16:0] N_HEIGHT;
+wire [16:0] N_WIDTH;
 wire [11:0] HDIV;
 wire [11:0] WDIV;
 wire [2:0] HMOD;
@@ -76,16 +79,27 @@ wire [2:0] WMOD;
 wire [3:0] HDEFICIT;
 wire [3:0] WDEFICIT;
 
+//address manipulation
+wire [15:0] SET_ROW;
+wire [15:0] START_90;
+
 //flags 
 wire STOP_ROT; 	//when input image is bigger than max
 wire LAST; 	//when last pixel set is processed 
 //wire LAST_HDIV; //when hdiv_count reaches HDIV - 1
 //wire LAST_WDIV; //when wdiv_count reaches WDIV - 1
 
+//out_addressput
+wire [31:0] out_address;
+wire [31:0] out_address0;
+wire [31:0] out_address90;
+wire [31:0] out_address180;
+wire [31:0] out_address270;
+
 assign HEIGHT = I_HEIGHT * 2'h3;
 assign WIDTH = I_WIDTH * 2'h3;
-assign NEW_HEIGHT = new_height * 2'h3;
-assign NEW_WIDTH = new_width * 2'h3;
+assign N_HEIGHT = new_height * 2'h3;
+assign N_WIDTH = new_width * 2'h3;
 
 assign HDIV = new_height[15:3];
 assign WDIV = new_width[15:3];
@@ -101,18 +115,26 @@ assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_WDIV = (wdiv_count == WDIV - 1)? 1: 0;
 assign LAST = (LAST_HDIV && LAST_WDIV)? 1 : 0;
 
-always @(*)
+assign out_address = row + col;
+assign out_address0 = row0 + col0;
+assign out_address90 = row90 + col90;
+assign out_address180 = row180 + col180;
+assign out_address270 = row270 + col270;
+
+always @(posedge I_HCLK)
     if (!I_HRESET_N)
-	FIRST = 0;
+	FIRST <= 0;
     else 
-	case (curr_state)
+	case (next_state)
+	    IDLE:
+		FIRST <= 0;
 	    READ:
 		if (row == 16'h0000)
-		    FIRST = 1;
+		    FIRST <= 1;
 		else 
-		    FIRST = FIRST;
+		    FIRST <= FIRST;
 	    WRITE:
-		FIRST = 0;
+		FIRST <= 0;
 	endcase
 
 always @(posedge I_HCLK)
@@ -148,12 +170,12 @@ always @(*)
 	case (curr_state)
 	    IDLE:
 		if (STOP_ROT)
-		    next_state <= IDLE;
+		    next_state = IDLE;
 		else 
 		    if (I_START)
-			next_state <= READ;
+			next_state = READ;
 		    else 
-			next_state <= IDLE;
+			next_state = IDLE;
 	    READ:
 		if (set_count == 6'h3f)
 		    next_state = WRITE;
@@ -162,36 +184,38 @@ always @(*)
 	    WRITE:
 		if (LAST)
 		    if (set_count == 6'h3f)
-			next_state <= IDLE;
+			next_state = IDLE;
 		    else 
-			next_state <= WRITE;
+			next_state = WRITE;
 		else 
 		    if (set_count == 6'h3f)
-			next_state <= READ;
+			next_state = READ;
 		    else 
-			next_state <= WRITE;
+			next_state = WRITE;
 	    default:
 		next_state = IDLE;
 	endcase
 
-// output image height and width
+// out_addressput image height 
 always @(*)
     if (!I_HRESET_N)
-    begin
 	new_height = 16'h0000;
-	new_width = 16'h0000;
-    end
     else
-    begin
 	if ((I_HEIGHT & 16'h0007) == 16'h0000)
 	    new_height = I_HEIGHT;
 	else 
 	    new_height = I_HEIGHT + HDEFICIT;
+
+// out_addressput image height 
+
+always @(*)
+    if (!I_HRESET_N)
+	new_width = 16'h0000;
+    else
 	if ((I_WIDTH & 16'h0007) == 16'h0000)
 	    new_width = I_WIDTH;
 	else 
 	    new_width = I_WIDTH + WDEFICIT;
-    end
 
 //count to 64
 always @(posedge I_HCLK)
@@ -249,7 +273,7 @@ always @(posedge I_HCLK)
     else 
 	case (next_state)
 	    IDLE:
-		hdiv_count <= 12'h000;
+		wdiv_count <= 12'h000;
 	    READ:
 		if (!LAST_WDIV)
 		    if (LAST_HDIV && (set_count == 6'h3f))
@@ -278,13 +302,7 @@ always @(posedge I_HCLK)
 	    IDLE:
 		row <= 16'h0000;
 	    READ:
-		if (!LAST_HDIV)
-		    if (burst_count == 3'h7)
-			row <= row + WIDTH;
-		    else 
-			row <= row;
-		else 
-		    if (set_count == 6'h3f)
+		    if (LAST_HDIV && (set_count == 6'h3f))
 			row <= 16'h0000;
 		    else 
 			if (burst_count == 3'h7)
@@ -375,33 +393,33 @@ always @(*)
     else 
 	case (curr_state)
 	    READ:
-		O_ADDR = row + col;
+		O_ADDR = out_address;
 	    WRITE:
 		if (I_DIRECTION)
 		    case (I_DEGREES)
 			DEG_0:
-			    O_ADDR = row0 + col0;
+			    O_ADDR = out_address0;
 			DEG_90:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address90;
 			DEG_180:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address180;
 			DEG_270:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address270;
 			default:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address;
 		    endcase
 		else 
 		    case (I_DEGREES)
 			DEG_0:
-			    O_ADDR = row0 + col0;
+			    O_ADDR = out_address0; 
 			DEG_90:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address90; 
 			DEG_180:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address180; 
 			DEG_270:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address270;
 			default:
-			    O_ADDR = row + col;
+			    O_ADDR = out_address; 
 		    endcase
 	    default:
 		O_ADDR = 32'h00000000;
