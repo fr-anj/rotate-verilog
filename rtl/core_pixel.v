@@ -104,10 +104,10 @@ wire temp3;
 wire temp4;
 
 assign temp1 = (I_DIRECTION && (I_DEGREES == DEG_90))? 1 : 0;
-assign temp2 = (!I_DIRECTION && (I_DEGREES == DEG_270))? 1 : 0;
+assign temp2 = ((!I_DIRECTION) && (I_DEGREES == DEG_270))? 1 : 0;
 assign increment = temp1 || temp2;
 assign temp3 = (I_DIRECTION && (I_DEGREES == DEG_270))? 1 : 0;
-assign temp4 = (!I_DIRECTION && (I_DEGREES == DEG_90))? 1 : 0;
+assign temp4 = ((!I_DIRECTION) && (I_DEGREES == DEG_90))? 1 : 0;
 assign decrement = temp3 || temp4;
 
 /*
@@ -128,24 +128,26 @@ always @(posedge I_HCLK)
 //state conditions
 always @(*)
     if (!I_HRESET_N)
-	next_state <= IDLE;
+	next_state = IDLE;
     else 
 	case(curr_state)
 	    IDLE: 
 		if (I_START)
-		    next_state <= READ;
+		    next_state = READ;
 		else 
-		    next_state <= IDLE;
+		    next_state = IDLE;
 	    READ:
 		if (trans_count == 6'h3f)
-		    next_state <= WRITE;
+		    next_state = WRITE;
 		else 
-		    next_state <= READ;
+		    next_state = READ;
 	    WRITE:
 		if (trans_count == 6'h3f)
-		    next_state <= READ;
+		    next_state = READ;
 		else 
-		    next_state <= WRITE;
+		    next_state = WRITE;
+	    default: 
+		next_state = IDLE;
 	endcase
 
 //count tot 64 
@@ -196,7 +198,7 @@ always @(posedge I_HCLK)
 		    end
 		else
 		    if (I_DMA_READY)
-			if (beat_count != 3'h5 && beat_count != 3'h6)
+			if ((beat_count != 3'h5) && (beat_count != 3'h6))
 			    begin
 				O_PIXEL_IN_ADDR0 <= O_PIXEL_IN_ADDR0 + 4;
 				O_PIXEL_IN_ADDR1 <= O_PIXEL_IN_ADDR1 + 4;
@@ -261,79 +263,79 @@ always @(posedge I_HCLK)
 always @(*)
     if (!I_HRESET_N)
 	begin
-	    pixel_r <= 8'h00;
-	    pixel_g <= 8'h00;
-	    pixel_b <= 8'h00;
+	    pixel_r = 8'h00;
+	    pixel_g = 8'h00;
+	    pixel_b = 8'h00;
 	end
     else
 	if (I_DIRECTION) //counter-clockwise
 	    case (I_DEGREES) //refer to function specification
 		DEG_0:
 		    begin
-			pixel_r <= 8'h00;
-			pixel_g <= 8'h01;
-			pixel_b <= 8'h02;
+			pixel_r = 8'h00;
+			pixel_g = 8'h01;
+			pixel_b = 8'h02;
 		    end
 		DEG_90:
 		    begin
-			pixel_r <= 8'h15;
-			pixel_g <= 8'h16;
-			pixel_b <= 8'h17;
+			pixel_r = 8'h15;
+			pixel_g = 8'h16;
+			pixel_b = 8'h17;
 		    end
 		DEG_180:
 		    begin
-			pixel_r <= 8'hbd;
-			pixel_g <= 8'hbe;
-			pixel_b <= 8'hbf;
+			pixel_r = 8'hbd;
+			pixel_g = 8'hbe;
+			pixel_b = 8'hbf;
 		    end
 		DEG_270:
 		    begin
-			pixel_r <= 8'ha8;
-			pixel_g <= 8'ha9;
-			pixel_b <= 8'haa;
+			pixel_r = 8'ha8;
+			pixel_g = 8'ha9;
+			pixel_b = 8'haa;
 		    end
 		default:
 		    begin
-			pixel_r <= 8'h00;
-			pixel_g <= 8'h00;
-			pixel_b <= 8'h00;
+			pixel_r = 8'h00;
+			pixel_g = 8'h00;
+			pixel_b = 8'h00;
 		    end
 	    endcase
 	else //clockwise 
 	    case (I_DEGREES) //refer to function specification
 		DEG_0:
 		    begin
-			pixel_r <= 8'h00;
-			pixel_g <= 8'h01;
-			pixel_b <= 8'h02;
+			pixel_r = 8'h00;
+			pixel_g = 8'h01;
+			pixel_b = 8'h02;
 		    end
 		DEG_90:
 		    begin
-			pixel_r <= 8'ha8;
-			pixel_g <= 8'ha9;
-			pixel_b <= 8'haa;
+			pixel_r = 8'ha8;
+			pixel_g = 8'ha9;
+			pixel_b = 8'haa;
 		    end
 		DEG_180:
 		    begin
-			pixel_r <= 8'hbd;
-			pixel_g <= 8'hbe;
-			pixel_b <= 8'hbf;
+			pixel_r = 8'hbd;
+			pixel_g = 8'hbe;
+			pixel_b = 8'hbf;
 		    end
 		DEG_270:
 		    begin
-			pixel_r <= 8'h15;
-			pixel_g <= 8'h16;
-			pixel_b <= 8'h17;
+			pixel_r = 8'h15;
+			pixel_g = 8'h16;
+			pixel_b = 8'h17;
 		    end
 		default:
 		    begin
-			pixel_r <= 8'h00;
-			pixel_g <= 8'h00;
-			pixel_b <= 8'h00;
+			pixel_r = 8'h00;
+			pixel_g = 8'h00;
+			pixel_b = 8'h00;
 		    end
 	    endcase
 
-//base address increment/decrement for 90 deg or 270 deg
+//base address increment/decremet for 90 deg or 270 deg
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
 	begin 
@@ -413,7 +415,7 @@ always @(posedge I_HCLK)
 		    addr_b <= pixel_b;
 		end
 	    READ:
-		if (I_DMA_READY && next_state != WRITE)
+		if (I_DMA_READY && (next_state != WRITE))
 		    if (increment)
 			if (beat_count == 3'h7)
 			    begin
@@ -516,7 +518,7 @@ always @(posedge I_HCLK)
 			    O_PIXEL_OUT_ADDR3 <= 8'h03;
 			end
 		    else
-			if (beat_count != 3'h5 && beat_count != 3'h6)
+			if ((beat_count != 3'h5) && (beat_count != 3'h6))
 			    begin
 				O_PIXEL_OUT_ADDR0 <= O_PIXEL_OUT_ADDR0 + 4;
 				O_PIXEL_OUT_ADDR1 <= O_PIXEL_OUT_ADDR1 + 4;

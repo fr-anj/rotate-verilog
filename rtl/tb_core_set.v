@@ -12,7 +12,7 @@ module tb_core_set();
     reg [15:0] 	I_HEIGHT;
     reg [15:0] 	I_WIDTH;
     reg 	I_DIRECTION;
-    reg [2:0] 	I_DEGREES;
+    reg [1:0] 	I_DEGREES;
     reg       	I_DMA_READY;
 
     reg 	I_START;
