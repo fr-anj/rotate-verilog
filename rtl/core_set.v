@@ -48,12 +48,21 @@ reg [11:0] hdiv_count; 	//count to HDIV
 reg [11:0] wdiv_count; //count to WDIV
 
 //addresses
-reg [15:0] row; //read row
-reg [15:0] col; //read column
+reg [15:0] row; 	//read row
+reg [15:0] col; 	//read column
+reg [15:0] row0; 	//read row
+reg [15:0] col0; 	//read column
+reg [15:0] row90; 	//read row
+reg [15:0] col90; 	//read column
+reg [15:0] row180; 	//read row
+reg [15:0] col180; 	//read column
+reg [15:0] row270; 	//read row
+reg [15:0] col270; 	//read column
 
 //signals
 reg LAST_HDIV;
 reg LAST_WDIV;
+reg FIRST;
 
 //height and width properties
 wire [16:0] HEIGHT;
@@ -91,6 +100,20 @@ assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
 //assign LAST_WDIV = (wdiv_count == WDIV - 1)? 1: 0;
 assign LAST = (LAST_HDIV && LAST_WDIV)? 1 : 0;
+
+always @(*)
+    if (!I_HRESET_N)
+	FIRST = 0;
+    else 
+	case (curr_state)
+	    READ:
+		if (row == 16'h0000)
+		    FIRST = 1;
+		else 
+		    FIRST = FIRST;
+	    WRITE:
+		FIRST = 0;
+	endcase
 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
@@ -261,7 +284,7 @@ always @(posedge I_HCLK)
 		    else 
 			row <= row;
 		else 
-		    if (set_count <= 6'h3f)
+		    if (set_count == 6'h3f)
 			row <= 16'h0000;
 		    else 
 			if (burst_count == 3'h7)
@@ -299,42 +322,89 @@ always @(posedge I_HCLK)
 //*****************************************************//
 //*****************************************************//
 
-/*always @(*)
+//current read row
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	row0 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		row0 <= 16'h0000;
+	    READ:
+		row0 <= row0;
+	    WRITE:
+		if (FIRST)
+		    row0 <= 16'h0000;
+		else 
+		    if (burst_count == 3'h7)
+			row0 <= row0 + WIDTH;
+		    else 
+			row0 <= row0;
+	endcase
+
+//current read column 
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	col0 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		col0 <= 16'h0000;
+	    READ:
+		if (!LAST_WDIV)
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			col0 <= col0 + 24;
+		    else 
+			col0 <= col0;
+		else 
+		    if (LAST_HDIV && (set_count == 6'h3e))
+			col0 <= 16'h0000;
+		    else 
+			col0 <= col0;
+	    WRITE:
+		col0 <= col0;
+	endcase
+
+//*****************************************************//
+//*****************************************************//
+//*****************************************************//
+
+always @(*)
     if (!I_HRESET_N)
 	O_ADDR = 32'h00000000;
     else 
 	case (curr_state)
 	    READ:
-		O_ADDR = row_address + col_address;
+		O_ADDR = row + col;
 	    WRITE:
 		if (I_DIRECTION)
 		    case (I_DEGREES)
 			DEG_0:
-			    O_ADDR = out_0;
+			    O_ADDR = row0 + col0;
 			DEG_90:
-			    O_ADDR = out_90;
+			    O_ADDR = row + col;
 			DEG_180:
-			    O_ADDR = out_180;
+			    O_ADDR = row + col;
 			DEG_270:
-			    O_ADDR = out_270;
+			    O_ADDR = row + col;
 			default:
-			    O_ADDR = out_0;
+			    O_ADDR = row + col;
 		    endcase
 		else 
 		    case (I_DEGREES)
 			DEG_0:
-			    O_ADDR = out_0;
+			    O_ADDR = row0 + col0;
 			DEG_90:
-			    O_ADDR = out_270;
+			    O_ADDR = row + col;
 			DEG_180:
-			    O_ADDR = out_180;
+			    O_ADDR = row + col;
 			DEG_270:
-			    O_ADDR = out_90;
+			    O_ADDR = row + col;
 			default:
-			    O_ADDR = out_0;
+			    O_ADDR = row + col;
 		    endcase
 	    default:
-		O_ADDR = O_ADDR;
+		O_ADDR = 32'h00000000;
 	endcase
-*/
+
 endmodule

@@ -58,7 +58,7 @@ module tb_core_set();
 	I_WIDTH = 8;
 	I_HEIGHT = 8;
 	I_DIRECTION = 0;
-	I_DEGREES = 1;
+	I_DEGREES = 0;
 	
     //start sequence
     @(posedge I_HCLK)
@@ -83,7 +83,7 @@ module tb_core_set();
 	    I_WIDTH = 62;
 	    I_HEIGHT = 63;
 	    I_DIRECTION = 0;
-	    I_DEGREES = 1;
+	    I_DEGREES = 0;
 	end
 
     //start sequence
@@ -110,7 +110,7 @@ module tb_core_set();
 	    I_WIDTH = 123;
 	    I_HEIGHT = 5;
 	    I_DIRECTION = 0;
-	    I_DEGREES = 1;
+	    I_DEGREES = 0;
 	end
 
     //start sequence
@@ -137,7 +137,7 @@ module tb_core_set();
 	    I_WIDTH = 32;
 	    I_HEIGHT = 24;
 	    I_DIRECTION = 0;
-	    I_DEGREES = 1;
+	    I_DEGREES = 0;
 	end
 
     //start sequence
