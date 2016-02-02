@@ -60,7 +60,8 @@ reg [17:0] row270; 	//read row
 reg [17:0] col270; 	//read column
 
 //address decrement or increment
-reg [16:0] dec90; 	//decrement 
+reg [15:0] dec90; 	//decrement 
+reg [15:0] dec180;	//decrement
 
 //signals
 reg LAST_HDIV;
@@ -79,9 +80,16 @@ wire [2:0] WMOD;
 wire [4:0] HDEFICIT;
 wire [4:0] WDEFICIT;
 
+//temp
+wire [15:0] temp1;
+wire [15:0] temp2;
+
 //address manipulation
 wire [23:0] START_90;
 wire [23:0] ROWDEC_90;
+wire [23:0] START_180;
+wire [23:0] ROWDEC_180;
+wire [23:0] COL_180;
 
 //flags 
 wire STOP_ROT; 	//when input image is bigger than max
@@ -110,8 +118,13 @@ assign WMOD = I_WIDTH[2:0];
 assign HDEFICIT = 4'h8 - {1'b0,HMOD};
 assign WDEFICIT = 4'h8 - {1'b0,WMOD};
 
-assign START_90 = (new_width - {12'h000,4'h8}) * 2'h3;
-assign ROWDEC_90 = N_WIDTH * 4'h8;
+assign temp1 = (new_width - 4'h8) * I_HEIGHT;
+assign START_90 = temp1 * 2'h3;
+assign ROWDEC_90 = HEIGHT * 4'h8;
+
+assign temp2 = (new_height - 4'h8) * new_width;
+assign START_180 = temp2 * 2'h3;
+assign ROWDEC_180 = WIDTH * 4'h8;
 
 assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
@@ -123,7 +136,6 @@ assign out_address0 = row0 + col0;
 assign out_address90 = row90 + col90;
 assign out_address180 = row180 + col180;
 assign out_address270 = row270 + col270;
-
 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
@@ -391,20 +403,28 @@ always @(posedge I_HCLK)
 //*****************************************************//
 //*****************************************************//
 
-/*
+//current read column 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
-	dec90 <= 16'h0000;
+	dec90 = 16'h0000;
     else 
 	case (next_state)
 	    IDLE:
 		dec90 <= 16'h0000;
 	    READ:
-		if (LAST_HDIV)
-		    dec90 <= dec90 + ROWDEC_90;
+		if (!LAST_WDIV)
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			dec90 <= dec90 + ROWDEC_90;
+		    else 
+			dec90 <= dec90;
+		else 
+		    if (LAST_HDIV && (set_count == 6'h3e))
+			dec90 <= 16'h0000;
+		    else 
+			dec90 <= dec90;
 	    WRITE:
-		if (FIRST)
-
+		dec90 <= dec90;
+	endcase
 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
@@ -416,9 +436,76 @@ always @(posedge I_HCLK)
 	    READ:
 		row90 <= row90;
 	    WRITE:
+		if (FIRST || (set_count == 6'h3f))
+		    row90 <= START_90 - dec90;
+		else
+		    if (burst_count == 3'h7)
+			row90 <= row90 + HEIGHT;
+		    else 
+			row90 <= row90;
+	endcase
+
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	col90 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		col90 <= 16'h0000;
+	    READ:
+		col90 <= col90;
+	    WRITE:
 		if (FIRST)
-		    row90 = START90 - 
-*/
+		    col90 <= 16'h0000;
+		else 
+		    if (set_count == 6'h3f)
+			col90 <= col90 + 24;
+		    else 
+			col90 <= col90;
+	endcase
+
+//*****************************************************//
+//*****************************************************//
+//*****************************************************//
+
+//current read column 
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	dec180 = 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		dec180 <= 16'h0000;
+	    READ:
+		if (!LAST_WDIV)
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			dec180 <= dec180 + ROWDEC_180;
+		    else 
+			dec180 <= dec180;
+		else 
+		    if (LAST_HDIV && (set_count == 6'h3e))
+			dec180 <= 16'h0000;
+		    else 
+			dec180 <= dec180;
+	    WRITE:
+		dec90 <= dec90;
+	endcase
+
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	row180 <= 16'h0000;
+    else
+	case (next_state)
+	    IDLE:
+		row180 <= 16'h0000;
+	    READ:
+		row180 <= row180;
+	    WRITE:
+		if (FIRST || (set_count == 6'h3f))
+		    row180 <= START_180 - dec180;
+		else 
+		    if (burst_count == 3'h7)
+			row180 <= row180 + 
 
 //*****************************************************//
 //*****************************************************//
@@ -449,11 +536,11 @@ always @(*)
 			DEG_0:
 			    O_ADDR = out_address0; 
 			DEG_90:
-			    O_ADDR = out_address90; 
+			    O_ADDR = out_address270
 			DEG_180:
 			    O_ADDR = out_address180; 
 			DEG_270:
-			    O_ADDR = out_address270;
+			    O_ADDR = out_address90;
 			default:
 			    O_ADDR = out_address; 
 		    endcase
