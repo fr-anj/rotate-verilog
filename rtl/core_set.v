@@ -38,8 +38,8 @@ parameter 	DEG_0 	= 2'h0,
 		DEG_270 = 2'h3;
 
 //registers
-reg [15:0] new_height;
-reg [15:0] new_width;
+reg [16:0] new_height;
+reg [16:0] new_width;
 
 //counters
 reg [5:0] set_count; 	//count to 64 
@@ -48,16 +48,16 @@ reg [11:0] hdiv_count; 	//count to HDIV
 reg [11:0] wdiv_count; //count to WDIV
 
 //addresses
-reg [15:0] row; 	//read row
-reg [15:0] col; 	//read column
-reg [15:0] row0; 	//read row
-reg [15:0] col0; 	//read column
-reg [15:0] row90; 	//read row
-reg [15:0] col90; 	//read column
-reg [15:0] row180; 	//read row
-reg [15:0] col180; 	//read column
-reg [15:0] row270; 	//read row
-reg [15:0] col270; 	//read column
+reg [17:0] row; 	//read row
+reg [17:0] col; 	//read column
+reg [17:0] row0; 	//read row
+reg [17:0] col0; 	//read column
+reg [17:0] row90; 	//read row
+reg [17:0] col90; 	//read column
+reg [17:0] row180; 	//read row
+reg [17:0] col180; 	//read column
+reg [17:0] row270; 	//read row
+reg [17:0] col270; 	//read column
 
 //address decrement or increment
 reg [16:0] dec90; 	//decrement 
@@ -68,20 +68,20 @@ reg LAST_WDIV;
 reg FIRST;
 
 //height and width properties
-wire [16:0] HEIGHT;
-wire [16:0] WIDTH;
-wire [16:0] N_HEIGHT;
-wire [16:0] N_WIDTH;
-wire [11:0] HDIV;
-wire [11:0] WDIV;
+wire [17:0] HEIGHT;
+wire [17:0] WIDTH;
+wire [18:0] N_HEIGHT;
+wire [18:0] N_WIDTH;
+wire [12:0] HDIV;
+wire [12:0] WDIV;
 wire [2:0] HMOD;
 wire [2:0] WMOD;
-wire [3:0] HDEFICIT;
-wire [3:0] WDEFICIT;
+wire [4:0] HDEFICIT;
+wire [4:0] WDEFICIT;
 
 //address manipulation
-wire [15:0] SET_ROW;
-wire [15:0] START_90;
+wire [23:0] START_90;
+wire [23:0] ROWDEC_90;
 
 //flags 
 wire STOP_ROT; 	//when input image is bigger than max
@@ -107,8 +107,11 @@ assign WDIV = new_width[15:3];
 assign HMOD = I_HEIGHT[2:0];
 assign WMOD = I_WIDTH[2:0];
 
-assign HDEFICIT = 4'h8 - HMOD;
-assign WDEFICIT = 4'h8 - WMOD;
+assign HDEFICIT = 4'h8 - {1'b0,HMOD};
+assign WDEFICIT = 4'h8 - {1'b0,WMOD};
+
+assign START_90 = (new_width - {12'h000,4'h8}) * 2'h3;
+assign ROWDEC_90 = N_WIDTH * 4'h8;
 
 assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
@@ -120,6 +123,7 @@ assign out_address0 = row0 + col0;
 assign out_address90 = row90 + col90;
 assign out_address180 = row180 + col180;
 assign out_address270 = row270 + col270;
+
 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
@@ -204,7 +208,7 @@ always @(*)
 	if ((I_HEIGHT & 16'h0007) == 16'h0000)
 	    new_height = I_HEIGHT;
 	else 
-	    new_height = I_HEIGHT + HDEFICIT;
+	    new_height = I_HEIGHT + {11'h000,HDEFICIT};
 
 // out_addressput image height 
 
@@ -215,7 +219,7 @@ always @(*)
 	if ((I_WIDTH & 16'h0007) == 16'h0000)
 	    new_width = I_WIDTH;
 	else 
-	    new_width = I_WIDTH + WDEFICIT;
+	    new_width = I_WIDTH + {11'h000,WDEFICIT};
 
 //count to 64
 always @(posedge I_HCLK)
@@ -387,6 +391,38 @@ always @(posedge I_HCLK)
 //*****************************************************//
 //*****************************************************//
 
+/*
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	dec90 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		dec90 <= 16'h0000;
+	    READ:
+		if (LAST_HDIV)
+		    dec90 <= dec90 + ROWDEC_90;
+	    WRITE:
+		if (FIRST)
+
+
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	row90 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		row90 <= 16'h0000;
+	    READ:
+		row90 <= row90;
+	    WRITE:
+		if (FIRST)
+		    row90 = START90 - 
+*/
+
+//*****************************************************//
+//*****************************************************//
+//*****************************************************//
 always @(*)
     if (!I_HRESET_N)
 	O_ADDR = 32'h00000000;
