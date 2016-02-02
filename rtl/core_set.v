@@ -125,6 +125,7 @@ assign ROWDEC_90 = HEIGHT * 4'h8;
 assign temp2 = (new_height - 4'h8) * new_width;
 assign START_180 = temp2 * 2'h3;
 assign ROWDEC_180 = WIDTH * 4'h8;
+assign COL_180 = (WDIV - 1) * 5'h18;
 
 assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
@@ -505,7 +506,29 @@ always @(posedge I_HCLK)
 		    row180 <= START_180 - dec180;
 		else 
 		    if (burst_count == 3'h7)
-			row180 <= row180 + 
+			row180 <= row180 + WIDTH;
+		    else 
+			row180 <= row180;
+	endcase
+
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	col180 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		col180 <= 16'h0000;
+	    READ:
+		col180 <= col180;
+	    WRITE:
+		if (FIRST)
+		    col180 <= COL_180;
+		else 
+		    if (set_count == 6'h3f)
+			col180 <= col180 - 24;
+		    else 
+			col180 <= col180;
+	endcase
 
 //*****************************************************//
 //*****************************************************//
@@ -536,7 +559,7 @@ always @(*)
 			DEG_0:
 			    O_ADDR = out_address0; 
 			DEG_90:
-			    O_ADDR = out_address270
+			    O_ADDR = out_address270;
 			DEG_180:
 			    O_ADDR = out_address180; 
 			DEG_270:
