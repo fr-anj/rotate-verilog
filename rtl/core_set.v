@@ -90,6 +90,7 @@ wire [23:0] ROWDEC_90;
 wire [23:0] START_180;
 wire [23:0] ROWDEC_180;
 wire [23:0] COL_180;
+wire [15:0] COLDEC_180;
 
 //flags 
 wire STOP_ROT; 	//when input image is bigger than max
@@ -122,10 +123,10 @@ assign temp1 = (new_width - 4'h8) * I_HEIGHT;
 assign START_90 = temp1 * 2'h3;
 assign ROWDEC_90 = HEIGHT * 4'h8;
 
-assign temp2 = (new_height - 4'h8) * new_width;
+assign temp2 = (new_height - 4'h8) * I_WIDTH;
 assign START_180 = temp2 * 2'h3;
 assign ROWDEC_180 = WIDTH * 4'h8;
-assign COL_180 = (WDIV - 1) * 5'h18;
+assign COL_180 = WDIV * 5'h18;
 
 assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
@@ -478,18 +479,15 @@ always @(posedge I_HCLK)
 	    IDLE:
 		dec180 <= 16'h0000;
 	    READ:
-		if (!LAST_WDIV)
-		    if (LAST_HDIV && (set_count == 6'h3f))
-			dec180 <= dec180 + ROWDEC_180;
-		    else 
-			dec180 <= dec180;
+		if (FIRST)
+		    dec180 <= 16'h0000;
 		else 
-		    if (LAST_HDIV && (set_count == 6'h3e))
-			dec180 <= 16'h0000;
+		    if (set_count == 6'h3f)
+			dec180 <= dec180 +  ROWDEC_180;
 		    else 
 			dec180 <= dec180;
 	    WRITE:
-		dec90 <= dec90;
+		dec180 <= dec180;
 	endcase
 
 always @(posedge I_HCLK)
@@ -502,10 +500,10 @@ always @(posedge I_HCLK)
 	    READ:
 		row180 <= row180;
 	    WRITE:
-		if (FIRST || (set_count == 6'h3f))
+		if (set_count == 6'h3f)
 		    row180 <= START_180 - dec180;
 		else 
-		    if (burst_count == 3'h7)
+		    if (burst_count == 3'h7) 
 			row180 <= row180 + WIDTH;
 		    else 
 			row180 <= row180;
@@ -517,22 +515,24 @@ always @(posedge I_HCLK)
     else 
 	case (next_state)
 	    IDLE:
-		col180 <= 16'h0000;
+		col180 <= COL_180;
 	    READ:
 		col180 <= col180;
 	    WRITE:
 		if (FIRST)
-		    col180 <= COL_180;
+		    col180 <= col180 - 24;
 		else 
-		    if (set_count == 6'h3f)
-			col180 <= col180 - 24;
-		    else 
-			col180 <= col180;
+		    col180 <= col180;
 	endcase
 
 //*****************************************************//
 //*****************************************************//
 //*****************************************************//
+
+//*****************************************************//
+//*****************************************************//
+//*****************************************************//
+
 always @(*)
     if (!I_HRESET_N)
 	O_ADDR = 32'h00000000;
