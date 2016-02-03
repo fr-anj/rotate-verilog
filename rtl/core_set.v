@@ -62,6 +62,7 @@ reg [17:0] col270; 	//read column
 //address decrement or increment
 reg [15:0] dec90; 	//decrement 
 reg [15:0] dec180;	//decrement
+reg [15:0] inc270;	//increment
 
 //signals
 reg LAST_HDIV;
@@ -91,6 +92,8 @@ wire [23:0] START_180;
 wire [23:0] ROWDEC_180;
 wire [23:0] COL_180;
 wire [15:0] COLDEC_180;
+wire [23:0] ROWINC_270;
+wire [23:0] COL_270;
 
 //flags 
 wire STOP_ROT; 	//when input image is bigger than max
@@ -127,6 +130,9 @@ assign temp2 = (new_height - 4'h8) * I_WIDTH;
 assign START_180 = temp2 * 2'h3;
 assign ROWDEC_180 = WIDTH * 4'h8;
 assign COL_180 = WDIV * 5'h18;
+
+assign COL_270 = (HDIV - 1) * 5'h18; 
+assign ROWINC_270 = HEIGHT * 4'h8;
 
 assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
@@ -479,7 +485,7 @@ always @(posedge I_HCLK)
 	    IDLE:
 		dec180 <= 16'h0000;
 	    READ:
-		if (FIRST)
+		if (LAST_HDIV)
 		    dec180 <= 16'h0000;
 		else 
 		    if (set_count == 6'h3f)
@@ -528,6 +534,65 @@ always @(posedge I_HCLK)
 //*****************************************************//
 //*****************************************************//
 //*****************************************************//
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	inc270 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		inc270 <= 16'h0000;
+	    READ:
+		if (!LAST_WDIV)
+		    if (LAST_HDIV && (set_count == 6'h3f))
+			inc270 <= inc270 + ROWINC_270;
+		    else 
+			inc270 <= inc270;
+		else 
+		    if (LAST_HDIV && (set_count == 6'h3e))
+			inc270 <= 16'h0000;
+		    else 
+			inc270 <= inc270;
+	    WRITE:
+		inc270 <= inc270;
+	endcase
+
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	row270 <= 16'h0000; 
+    else
+	case (next_state)
+	    IDLE:
+		row270 <= 16'h0000;
+	    READ:
+		row270 <= row270;
+	    WRITE:
+		if (set_count == 6'h3f)
+		    row270 <= inc270;
+		else
+		    if (burst_count == 3'h7)
+			row270 <= row270 + HEIGHT;
+		    else 
+			row270 <= row270;
+	endcase
+
+always @(posedge I_HCLK)
+    if (!I_HRESET_N)
+	col270 <= 16'h0000;
+    else 
+	case (next_state)
+	    IDLE:
+		col270 <= 16'h0000;
+	    READ:
+		col270 <= col270;
+	    WRITE:
+		if (FIRST)
+		    col270 <= COL_270;
+		else 
+		    if (set_count == 6'h3f)
+			col270 <= col270 - 5'h18;
+		    else 
+			col270 <= col270;
+	endcase
 
 //*****************************************************//
 //*****************************************************//
