@@ -50,6 +50,9 @@ module tb_apb;
 	    I_PRESET_N <= 0;
 
 	@(posedge I_PCLK)
+	    I_PRESET_N <= 1;
+
+	@(posedge I_PCLK)
 	    begin
 		I_PADDR <= 0;
 		I_PWDATA <= 0;
@@ -79,6 +82,38 @@ module tb_apb;
 		I_PWDATA <= 128;
 		I_PENABLE <= 1;
 	    end
+
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+
+	repeat(4) @(posedge I_PCLK);
+	@(posedge I_PCLK)
+	    begin
+		I_PADDR <= 8;
+		I_PWDATA <= 24;
+		I_PENABLE <= 1;
+	    end
+
+	repeat(4) @(posedge I_PCLK);
+	@(posedge I_PCLK)
+	    begin
+		I_PADDR <= 16;
+		I_PWDATA <= 5555;
+		I_PENABLE <= 1;
+	    end
+
+	repeat(4) @(posedge I_PCLK);
+	@(posedge I_PCLK)
+	    begin
+		I_PADDR <= 56;
+		I_PWDATA <= 66666;
+		I_PENABLE <= 0;
+	    end
+
+	repeat(8)@(posedge I_PCLK);
+
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
 
 	#500 $finish;
     end
