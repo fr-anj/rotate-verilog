@@ -3,7 +3,7 @@
 module apbif (
     output reg 	[31:0] 	O_PRDATA,
     output reg 		O_PREADY,
-    output reg 		O_INTERRUPT,
+//    output reg 		O_INTERRUPT,
 
     output 	[31:0] 	O_DMA_SRC_IMG,
     output 	[31:0] 	O_DMA_DST_IMG,

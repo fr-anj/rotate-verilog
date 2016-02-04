@@ -14,7 +14,38 @@ module tb_apb;
     reg 	I_PRESET_N;
     reg 	I_PCLK;
 
+    wire [31:0]	O_DMA_SRC_IMG;
+    wire [31:0]	O_DMA_DST_IMG;
+    wire [15:0]	O_ROT_IMG_H;
+    wire [15:0]	O_ROT_IMG_W;
+    wire [15:0]	O_ROT_IMG_NEW_H;	// TODO: make input from core
+    wire [15:0]	O_ROT_IMG_NEW_W;	// TODO: make input from core
+    wire [1:0] 	O_ROT_IMG_MODE;
+    wire       	O_ROT_IMG_DIR;
+    wire       	O_CTRL_START;
+    wire       	O_CTRL_RESET;
+    wire       	O_CTRL_INTR_MASK;
+    wire       	O_CTRL_BEF_MASK;	// TODO: confirm if read by core
+    wire       	O_CTRL_AFT_MASK;	// TODO: confirm if read by core
+    wire       	O_CTRL_INTR_CLEAR;
+    wire       	O_CTRL_BUSY;		// TODO: make input from core 
+    
     apbif APB0 (
+    .O_DMA_SRC_IMG(O_DMA_SRC_IMG),
+    .O_DMA_DST_IMG(O_DMA_DST_IMG),
+    .O_ROT_IMG_H(O_ROT_IMG_H),
+    .O_ROT_IMG_W(O_ROT_IMG_W),
+    .O_ROT_IMG_NEW_H(O_ROT_IMG_NEW_H),
+    .O_ROT_IMG_NEW_W(O_ROT_IMG_NEW_W),
+    .O_ROT_IMG_MODE(O_ROT_IMG_MODE),
+    .O_ROT_IMG_DIR(O_ROT_IMG_DIR),
+    .O_CTRL_START(O_CTRL_START),
+    .O_CTRL_RESET(O_CTRL_RESET),
+    .O_CTRL_INTR_MASK(O_CTRL_INTR_MASK),
+    .O_CTRL_BEF_MASK(O_CTRL_BEF_MASK),
+    .O_CTRL_AFT_MASK(O_CTRL_AFT_MASK),
+    .O_CTRL_INTR_CLEAR(O_CTRL_INTR_CLEAR),
+    .O_CTRL_BUSY(O_CTRL_BUSY),
     .O_PRDATA(O_PRDATA),
     .O_PREADY(O_PREADY), 
     .I_PSEL(I_PSEL),
@@ -106,7 +137,7 @@ module tb_apb;
 	@(posedge I_PCLK)
 	    begin
 		I_PADDR <= 56;
-		I_PWDATA <= 66666;
+		I_PWDATA <= 1;
 		I_PENABLE <= 0;
 	    end
 
