@@ -35,4 +35,51 @@ module dmac (
     input I_HCLK
 );
 
+//AHB interface =========== from ahbif to OUT
+wire HBUSREQ;		
+wire HWRITE;   	 	
+wire HGRANT;		
+wire HREADY;
+wire HRESETN_N;
+wire HCLK;	   
+wire [31:0] HADDR;	
+wire [1:0] HTRANS;   
+wire [2:0] HSIZE;	   
+wire [2:0] HBURST;   
+wire [31:0] HWDATA;  
+wire [31:0] RDATA;  
+wire [31:0] HRDATA; 
+
+//control wires
+wire START; 
+wire WRITE;  
+wire BUSY;   
+wire [2:0] SIZE; 
+wire [31:0] ADDR;  
+wire [31:0] WDATA;  
+wire [5:0] COUNT;  
+
+ahbif AHBIF0 (
+.HBUSREQ,
+.HADDR,	
+.HTRANS,   
+.HWRITE,   
+.HSIZE,	   
+.HBURST,   
+.HWDATA,   
+.O_RDATA,  
+.HRDATA,  
+.I_START, 
+.I_SIZE, 
+.I_ADDR,   
+.I_WDATA,  
+.I_COUNT,  
+.I_WRITE,  
+.I_BUSY,   
+.HGRANT,
+.HREADY,
+.HRESETN_N,
+.HCLK
+);		
+
 endmodule 
