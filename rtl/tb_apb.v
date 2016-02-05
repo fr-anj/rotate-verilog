@@ -2,7 +2,6 @@
 
 module tb_apb;
 
-
     wire [31:0] O_PRDATA;
     wire 	O_PREADY;
     
@@ -29,7 +28,13 @@ module tb_apb;
     wire       	O_CTRL_AFT_MASK;	// TODO: confirm if read by core
     wire       	O_CTRL_INTR_CLEAR;
     wire       	O_CTRL_BUSY;		// TODO: make input from core 
-    
+   
+    reg [15:0] I_ROT_IMG_NEW_H;
+    reg [15:0] I_ROT_IMG_NEW_W;
+    reg I_CTRL_BEF_MASK;
+    reg I_CTRL_AFT_MASK;
+    reg I_CTRL_BUSY;
+
     apbif APB0 (
     .O_DMA_SRC_IMG(O_DMA_SRC_IMG),
     .O_DMA_DST_IMG(O_DMA_DST_IMG),
@@ -47,7 +52,14 @@ module tb_apb;
     .O_CTRL_INTR_CLEAR(O_CTRL_INTR_CLEAR),
     .O_CTRL_BUSY(O_CTRL_BUSY),
     .O_PRDATA(O_PRDATA),
-    .O_PREADY(O_PREADY), 
+    .O_PREADY(O_PREADY),
+
+    .I_ROT_IMG_NEW_H(I_ROT_IMG_NEW_H),
+    .I_ROT_IMG_NEW_W(I_ROT_IMG_NEW_W),
+    .I_CTRL_BEF_MASK(I_CTRL_BEF_MASK),
+    .I_CTRL_AFT_MASK(I_CTRL_AFT_MASK),
+    .I_CTRL_BUSY(I_CTRL_BUSY),
+
     .I_PSEL(I_PSEL),
     .I_PENABLE(I_PENABLE),
     .I_PWRITE(I_PWRITE),
@@ -70,81 +82,39 @@ module tb_apb;
     always 
 	#1 I_PCLK = ~I_PCLK;
 
+    always 
+	repeat(10) @(posedge I_PCLK)
+	    I_PSEL <= ~ I_PSEL;
+
     initial begin
 	$vcdpluson;
 	$vcdplusmemon;
 
-	@(posedge I_PCLK)
-	    I_PRESET_N <= 1;
-
+    //initalize bus#########
 	@(posedge I_PCLK)
 	    I_PRESET_N <= 0;
 
 	@(posedge I_PCLK)
-	    I_PRESET_N <= 1;
-
-	@(posedge I_PCLK)
-	    begin
-		I_PADDR <= 0;
-		I_PWDATA <= 0;
-	    end
-
-	@(posedge I_PCLK)
-	    begin
-		I_PADDR <= 4;
-		I_PWDATA <= 500;
-	    end
-
-	@(posedge I_PCLK)
-	    I_PSEL <= 1;
-
-	@(posedge I_PCLK)
 	    I_PENABLE <= 1;
+    //######################
 
+    //DMA_SRC_IMG###########
 	@(posedge I_PCLK)
-	    I_PENABLE <= 0;
-
-	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 0;
+	    I_PWDATA <= 20;
 	    I_PWRITE <= 1;
+	    end
+    //######################
 
+    //DMA_DST_IMG###########
 	@(posedge I_PCLK)
 	    begin
-		I_PADDR <= 4;
-		I_PWDATA <= 128;
-		I_PENABLE <= 1;
+	    I_PADDR <= 4;
+	    I_PADDR <= 7000;
+	    I_PADDR <= 1;
 	    end
-
-	@(posedge I_PCLK)
-	    I_PENABLE <= 0;
-
-	repeat(4) @(posedge I_PCLK);
-	@(posedge I_PCLK)
-	    begin
-		I_PADDR <= 8;
-		I_PWDATA <= 24;
-		I_PENABLE <= 1;
-	    end
-
-	repeat(4) @(posedge I_PCLK);
-	@(posedge I_PCLK)
-	    begin
-		I_PADDR <= 16;
-		I_PWDATA <= 5555;
-		I_PENABLE <= 1;
-	    end
-
-	repeat(4) @(posedge I_PCLK);
-	@(posedge I_PCLK)
-	    begin
-		I_PADDR <= 56;
-		I_PWDATA <= 1;
-		I_PENABLE <= 0;
-	    end
-
-	repeat(8)@(posedge I_PCLK);
-
-	@(posedge I_PCLK)
-	    I_PENABLE <= 1;
+    //######################
 
 	#500 $finish;
     end
