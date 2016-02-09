@@ -37,7 +37,7 @@ module apbif (
     input 		I_PCLK
 );
 
-integer i;
+integer i,j;
 
 reg [7:0] REGISTER_FILE [59:0];
 
@@ -59,24 +59,26 @@ assign address2 = address1 + 6'h01;
 assign address3 = address1 + 6'h02;
 assign address4 = address1 + 6'h03;
 
-wire read_only;
-wire read_only_1;
-wire read_only_2;
-wire write_only; 
-
-assign read_only_1 	= (address1 == ROT_IMG_NEW_H) || (address1 == ROT_IMG_NEW_W); 
-assign read_only_2 	= (address1 == CTRL_BEF_MASK) || (address1 == CTRL_AFT_MASK);
-assign read_only 	= read_only_1 || read_only_2 || (address1 == CTRL_BUSY);
-assign write_only 	= (address1 == CTRL_RESET) || (address1 == CTRL_INTR_CLEAR);
+/***********************
+*wire read_only;
+*wire read_only_1;
+*wire read_only_2;
+*wire write_only; 
+*
+*assign read_only_1 	= (address1 == ROT_IMG_NEW_H) || (address1 == ROT_IMG_NEW_W); 
+*assign read_only_2 	= (address1 == CTRL_BEF_MASK) || (address1 == CTRL_AFT_MASK);
+*assign read_only 	= read_only_1 || read_only_2 || (address1 == CTRL_BUSY);
+*assign write_only 	= (address1 == CTRL_RESET) || (address1 == CTRL_INTR_CLEAR);
+***********************/
 
 //request master to extend read state
 always @(posedge I_PCLK)
     if (!I_PRESET_N)
 	O_PREADY <= 0;
     else 
-	if ((I_PSEL && !I_PENABLE) || (I_PENABLE && !I_PSEL))
+	if (I_PENABLE)
 	    O_PREADY <= 1;
-	else
+	else 
 	    O_PREADY <= 0;
 
 // write to REGISTER_FILE
@@ -85,15 +87,10 @@ always @(posedge I_PCLK)
 	for (i = 0; i < 60; i = i + 1)
 	    REGISTER_FILE[i] <= 8'h00;
     else 
-	if (I_PSEL && I_PENABLE && I_PWRITE && !read_only)
-	    begin
-		REGISTER_FILE[address1]	<= I_PWDATA[7:0];
-		REGISTER_FILE[address2]	<= I_PWDATA[15:8];
-		REGISTER_FILE[address3]	<= I_PWDATA[23:16];
-		REGISTER_FILE[address4]	<= I_PWDATA[31:24];
-	    end
-	else
+	if (I_PSEL && I_PENABLE && I_PWRITE)
 	    case (address1)
+		//########################################################
+		//######################READ-ONLY#########################
 		ROT_IMG_NEW_H:
 		    begin
 			REGISTER_FILE[address1] <= I_ROT_IMG_NEW_H[7:0];
@@ -110,20 +107,39 @@ always @(posedge I_PCLK)
 		    REGISTER_FILE[address1][0] <= I_CTRL_AFT_MASK;
 		CTRL_BUSY:
 		    REGISTER_FILE[address1][0] <= I_CTRL_BUSY;
+		//########################################################
+		//########################################################
+		default:
+		    begin
+			REGISTER_FILE[address1]	<= I_PWDATA[7:0];
+			REGISTER_FILE[address2]	<= I_PWDATA[15:8];
+			REGISTER_FILE[address3]	<= I_PWDATA[23:16];
+			REGISTER_FILE[address4]	<= I_PWDATA[31:24];
+		    end
 	    endcase
+	else
+	   for (j = 0; j < 60; j = j + 1)
+	       REGISTER_FILE[j] <= REGISTER_FILE[j];
     
 // to CPU
 always @(posedge I_PCLK)
     if (!I_PRESET_N)
 	O_PRDATA <= 32'h00000000;
     else 
-	if (I_PSEL && I_PENABLE && !I_PWRITE && !write_only)
-	    begin
-		O_PRDATA[7:0] 	<= REGISTER_FILE[address1];
-		O_PRDATA[15:8] 	<= REGISTER_FILE[address2];
-		O_PRDATA[23:16]	<= REGISTER_FILE[address3];
-		O_PRDATA[31:24]	<= REGISTER_FILE[address4];
-	    end
+	if (I_PSEL && I_PENABLE && !I_PWRITE)
+	    case (address1)
+		CTRL_RESET:
+		    O_PRDATA <= O_PRDATA;
+		CTRL_INTR_CLEAR:
+		    O_PRDATA <= O_PRDATA;
+		default:
+		    begin
+			O_PRDATA[7:0] 	<= REGISTER_FILE[address1];
+			O_PRDATA[15:8] 	<= REGISTER_FILE[address2];
+			O_PRDATA[23:16]	<= REGISTER_FILE[address3];
+			O_PRDATA[31:24]	<= REGISTER_FILE[address4];
+		    end
+	    endcase
 	else 
 	    O_PRDATA <= O_PRDATA;
 

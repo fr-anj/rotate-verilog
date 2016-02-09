@@ -82,10 +82,6 @@ module tb_apb;
     always 
 	#1 I_PCLK = ~I_PCLK;
 
-    always 
-	repeat(10) @(posedge I_PCLK)
-	    I_PSEL <= ~ I_PSEL;
-
     initial begin
 	$vcdpluson;
 	$vcdplusmemon;
@@ -95,25 +91,149 @@ module tb_apb;
 	    I_PRESET_N <= 0;
 
 	@(posedge I_PCLK)
-	    I_PENABLE <= 1;
+	    I_PRESET_N <= 1;
+
+	repeat(5) @(posedge I_PCLK);
+
+	@(posedge I_PCLK)
+	    I_PSEL <= 1;
     //######################
 
     //DMA_SRC_IMG###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
 	@(posedge I_PCLK)
 	    begin
 	    I_PADDR <= 0;
 	    I_PWDATA <= 20;
 	    I_PWRITE <= 1;
 	    end
+	
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
     //######################
 
     //DMA_DST_IMG###########
 	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
 	    begin
 	    I_PADDR <= 4;
-	    I_PADDR <= 7000;
-	    I_PADDR <= 1;
+	    I_PWDATA<= 7000;
+	    I_PWRITE<= 1;
 	    end
+
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+    //######################
+
+    //ROT_IMG_H###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 8;
+	    I_PWDATA <= 5;
+	    I_PWRITE <= 1;
+	    end
+	
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+    //######################
+
+    //ROT_IMG_W###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 6'h0c;
+	    I_PWDATA<= 8;
+	    I_PWRITE<= 1;
+	    end
+
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+    //######################
+
+    //ROT_IMG_NEW_H###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 6'h10;
+	    I_PWDATA <= 20; //should not be written
+	    I_PWRITE <= 1;
+	    I_ROT_IMG_NEW_H <= 8; 
+	    end
+	
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+    //######################
+
+    //ROT_IMG_NEW_W###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 6'h14;
+	    I_PWDATA<= 7000;	//should not be written
+	    I_PWRITE<= 1;
+	    I_ROT_IMG_NEW_W <= 8;
+	    end
+
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+    //######################
+
+    //ROT_IMG_MODE###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 6'h18;
+	    I_PWDATA <= 2;
+	    I_PWRITE <= 1;
+	    end
+	
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+    //######################
+
+    //ROT_IMG_DIR###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 6'h1c;
+	    I_PWDATA<= 1;
+	    I_PWRITE<= 1;
+	    end
+
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
+    //######################
+
+    //CTRL_START###########
+	@(posedge I_PCLK)
+	    I_PENABLE <= 1;
+
+	@(posedge I_PCLK)
+	    begin
+	    I_PADDR <= 6'h20;
+	    I_PWDATA <= 1;
+	    I_PWRITE <= 1;
+	    end
+	
+	@(posedge I_PCLK)
+	    I_PENABLE <= 0;
     //######################
 
 	#500 $finish;
