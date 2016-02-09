@@ -9,87 +9,94 @@ module dmac (
     output [2:0] 	O_HBURST,
     
     input 		I_START,
-    input 		I_SIZE,
+    input [2:0]		I_SIZE,
     input [31:0] 	I_ADDR,
-    input 		I_COUNT,
-    input [31:0] 	I_PS_COUNT,
+    input [4:0]		I_COUNT,
+    //input [31:0] 	I_PS_COUNT,
     input 		I_WRITE,
     input 		I_BUSY,
-    input [7:0]		I_PIXEL_OUT_R,
-    input [7:0]		I_PIXEL_OUT_G,
-    input [7:0] 	I_PIXEL_OUT_B,
-    input [7:0]		I_PIXEL_IN_R,
-    input [7:0] 	I_PIXEL_IN_G,
-    input [7:0] 	I_PIXEL_IN_B,
-    input [7:0] 	I_PIXEL_OUT_0,
-    input [7:0] 	I_PIXEL_OUT_1,
-    input [7:0] 	I_PIXEL_OUT_2,
-    input [7:0] 	I_PIXEL_OUT_3,
-    input [7:0] 	I_PIXEL_IN_0,
-    input [7:0] 	I_PIXEL_IN_1,
-    input [7:0] 	I_PIXEL_IN_2,
-    input [7:0] 	I_PIXEL_IN_3,
+    input [31:0] 	I_WDATA,
+    input [31:0] 	I_HRDATA,
+    input [7:0]		I_PIXEL_OUT_ADDRR,
+    input [7:0]		I_PIXEL_OUT_ADDRG,
+    input [7:0] 	I_PIXEL_OUT_ADDRB,
+    input [7:0]		I_PIXEL_IN_ADDRR,
+    input [7:0] 	I_PIXEL_IN_ADDRG,
+    input [7:0] 	I_PIXEL_IN_ADDRB,
+    input [7:0] 	I_PIXEL_OUT_ADDR0,
+    input [7:0] 	I_PIXEL_OUT_ADDR1,
+    input [7:0] 	I_PIXEL_OUT_ADDR2,
+    input [7:0] 	I_PIXEL_OUT_ADDR3,
+    input [7:0] 	I_PIXEL_IN_ADDR0,
+    input [7:0] 	I_PIXEL_IN_ADDR1,
+    input [7:0] 	I_PIXEL_IN_ADDR2,
+    input [7:0] 	I_PIXEL_IN_ADDR3,
     
-
+    input I_HGRANT,
+    input I_HREADY,
     input I_HRESET_N,
     input I_HCLK
 );
 
-//AHB interface =========== from ahbif to OUT
-wire HBUSREQ;		
-wire HWRITE;   	 	
-wire HGRANT;		
-wire HREADY;
-wire HRESETN_N;
-wire HCLK;	   
-wire [31:0] HADDR;	
-wire [1:0] HTRANS;   
-wire [2:0] HSIZE;	   
-wire [2:0] HBURST;   
-wire [31:0] HWDATA;  
-wire [31:0] RDATA;  
-wire [31:0] HRDATA; 
+wire [7:0] PIXEL_R;
+wire [7:0] PIXEL_G;
+wire [7:0] PIXEL_B;
 
-//control wires
-wire START; 
-wire WRITE;  
-wire BUSY;   
-wire [2:0] SIZE; 
-wire [31:0] ADDR;  
-wire [31:0] WDATA;  
-wire [5:0] COUNT;  
+wire [31:0] DATA_READ_FROM_AHB;
 
-ahbif AHBIF0 (
-O_PRDATA,
-O_PREADY,
-O_INTERRUPT,
-O_DMA_SRC_IMG,
-O_DMA_DST_IMG,
-O_ROT_IMG_H,
-O_ROT_IMG_W,
-O_ROT_IMG_NEW_H,
-O_ROT_IMG_NEW_W,
-O_ROT_IMG_MODE,
-O_ROT_IMG_DIR,
-O_CTRL_START,
-O_CTRL_RESET,
-O_CTRL_INTR_MASK,
-O_CTRL_BEF_MASK,	
-O_CTRL_AFT_MASK,	
-O_CTRL_INTR_CLEAR,
-O_CTRL_BUSY,		
-I_ROT_IMG_NEW_H,
-I_ROT_IMG_NEW_W,
-I_CTRL_BEF_MASK,
-I_CTRL_AFT_MASK,
-I_CTRL_BUSY,
-I_PSEL,
-I_PENABLE,
-I_PWRITE,
-I_PADDR,
-I_PWDATA,
-I_PRESET_N,
-I_PCLK
-);		
+    ahbif AHB (
+    .O_HBUSREQ(O_HBUSREQ),
+    .O_HADDR(O_HADDR),  
+    .O_HTRANS(O_HTRANS), 
+    .O_HWRITE(O_HWRITE), 
+    .O_HSIZE(O_HSIZE),  
+    .O_HBURST(O_HBURST), 
+    .O_HWDATA(O_HWDATA), 
+    .O_RDATA(DATA_READ_FROM_AHB),  
+    .I_HRDATA(I_HRDATA),   
+    .I_START(I_START),  
+    .I_SIZE(I_SIZE), 
+    .I_ADDR(I_ADDR),   
+    .I_WDATA(I_WDATA),  
+    .I_COUNT(I_COUNT),  
+    .I_WRITE(I_WRITE),  
+    .I_BUSY(I_BUSY),   
+    .I_HGRANT(I_HGRANT),   
+    .I_HREADY(I_HREADY),   
+    .I_HRESET_N(I_HRESET_N),	
+    .I_HCLK(I_HCLK)
+    );		
+
+    output_mem OUTBUFF (
+    .O_WDATA(O_HWDATA),
+    .I_PIXEL_B(PIXEL_B),
+    .I_PIXEL_G(PIXEL_G),
+    .I_PIXEL_R(PIXEL_R),
+    .I_PIXEL_IN_ADDRB(I_PIXEL_IN_ADDRB),
+    .I_PIXEL_IN_ADDRG(I_PIXEL_IN_ADDRG),
+    .I_PIXEL_IN_ADDRR(I_PIXEL_IN_ADDRR),
+    .I_PIXEL_OUT_ADDR0(I_PIXEL_OUT_ADDR0),
+    .I_PIXEL_OUT_ADDR1(I_PIXEL_OUT_ADDR1),
+    .I_PIXEL_OUT_ADDR2(I_PIXEL_OUT_ADDR2),
+    .I_PIXEL_OUT_ADDR3(I_PIXEL_OUT_ADDR3),
+    .I_HRESET_N(I_HRESET_N),
+    .I_HCLK(I_HCLK)
+    );
+
+    input_mem INBUFF(
+    .O_PIXEL_B(PIXEL_B),
+    .O_PIXEL_G(PIXEL_G),
+    .O_PIXEL_R(PIXEL_R),
+    .I_HWDATA(DATA_READ_FROM_AHB),
+    .I_PIXEL_IN_ADDR0(I_PIXEL_IN_ADDR0),
+    .I_PIXEL_IN_ADDR1(I_PIXEL_IN_ADDR1),
+    .I_PIXEL_IN_ADDR2(I_PIXEL_IN_ADDR2),
+    .I_PIXEL_IN_ADDR3(I_PIXEL_IN_ADDR3),
+    .I_PIXEL_OUT_ADDRB(I_PIXEL_OUT_ADDRB),
+    .I_PIXEL_OUT_ADDRG(I_PIXEL_OUT_ADDRG),
+    .I_PIXEL_OUT_ADDRR(I_PIXEL_OUT_ADDRR),
+    .I_HRESET_N(I_HRESET_N),
+    .I_HCLK(I_HCLK)
+    );
 
 endmodule 
