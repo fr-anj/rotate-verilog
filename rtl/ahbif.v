@@ -32,7 +32,7 @@ DATE: 15/11/03
 		-> waveforms still the same
 	*fixing 16 warnings
 		->overflow warning -currently ignored-
-		->feed through warning (I_WRITE and HWRITE) -currently ignored-
+		->feed through warning (I_WRITE and O_HWRITE) -currently ignored-
 	*8 warnings left -currently ignored-
 DATE: 15/11/04
 	*added HRDATA
@@ -49,13 +49,13 @@ TODO: include HRESP
 `timescale 1ns/1ps
 
 module ahbif (
-	output reg		HBUSREQ,	//to arbiter
-	output reg 	[31:0] 	HADDR,		//to slave
-	output reg 	[1:0]	HTRANS,		//to slave
-    	output 			HWRITE,		//to slave 
-    	output reg 	[2:0]   HSIZE,		//to slave
-	output reg 	[2:0]   HBURST,		//to slave
-	output reg 	[31:0]  HWDATA,		//to slave
+	output reg		O_HBUSREQ,	//to arbiter
+	output reg 	[31:0] 	O_HADDR,		//to slave
+	output reg 	[1:0]	O_HTRANS,		//to slave
+    	output 			O_HWRITE,		//to slave 
+    	output reg 	[2:0]   O_HSIZE,		//to slave
+	output reg 	[2:0]   O_HBURST,		//to slave
+	output reg 	[31:0]  O_HWDATA,		//to slave
 	output	 	[31:0]	O_RDATA,	//to input FIFO 
 
 	input 		[31:0]	HRDATA,		//from slave
@@ -216,11 +216,11 @@ always @(*)
 //address output 
 always @(*)
 	// if (!HRESETN_N)
-	// 	HADDR = 32'h00000000;
+	// 	O_HADDR = 32'h00000000;
 	// else 
-		HADDR = new_addr;
+		O_HADDR = new_addr;
 
-// assign HADDR = new_addr;
+// assign O_HADDR = new_addr;
 
 //address alignment
 always @(*)
@@ -302,17 +302,17 @@ always @(*)
 //write data output 
 always @(posedge HCLK)
 	if (!HRESETN_N)
-		HWDATA <= 32'h00000000;
+		O_HWDATA <= 32'h00000000;
 	else 
 		if (I_WRITE)
 			if ((next_state == s_seq) || (next_state == s_finish) || (next_state == s_nseq && LIMIT))
-				HWDATA <= data;
+				O_HWDATA <= data;
 			else if (next_state == s_busy)
-				HWDATA <= HWDATA;
+				O_HWDATA <= O_HWDATA;
 			else 
-				HWDATA <= 32'h00000000;
+				O_HWDATA <= 32'h00000000;
 		else 
-			HWDATA <= 32'h00000000;
+			O_HWDATA <= 32'h00000000;
 
 //write data process 
 always @(*)
@@ -334,11 +334,11 @@ always @(*)
 //output transfer type
 always @(*)
 	// if (!HRESETN_N)
-	// 	HTRANS = 2'b00;
+	// 	O_HTRANS = 2'b00;
 	// else 
-		HTRANS = transfer_type;
+		O_HTRANS = transfer_type;
 
-// assign HTRANS = transfer_type;
+// assign O_HTRANS = transfer_type;
 
 //process transfer type
 always @(posedge HCLK)
@@ -359,12 +359,12 @@ always @(posedge HCLK)
 //output burst type
 always @(posedge HCLK)
 	if (!HRESETN_N)
-		HBURST <= 4'h0;
+		O_HBURST <= 4'h0;
 	else 
 		if (next_state == s_idle)
-			HBURST <= 4'h0;
+			O_HBURST <= 4'h0;
 		else 
-			HBURST <= burst_type;
+			O_HBURST <= burst_type;
 
 //process burst type
 always @(*)
@@ -384,28 +384,28 @@ always @(*)
 				burst_type = INCR;
 		endcase
 
-//output HSIZE
+//output O_HSIZE
 always @(posedge HCLK)
 	if (!HRESETN_N)
-		HSIZE <= 2'b00;
+		O_HSIZE <= 2'b00;
 	else 
 		if (next_state == s_idle)
-			HSIZE <= 2'b00;
+			O_HSIZE <= 2'b00;
 		else 
 			if (I_SIZE == B8 || I_SIZE == B16 || I_SIZE == B32)
-				HSIZE <= I_SIZE;
+				O_HSIZE <= I_SIZE;
 			else 
-				HSIZE <= B32;
+				O_HSIZE <= B32;
 
 //bus request to arbiter
 always @(posedge HCLK)
 	if (!HRESETN_N)
-		HBUSREQ <= 0;
+		O_HBUSREQ <= 0;
 	else 
 		if (I_START)
-			HBUSREQ <= 1;
+			O_HBUSREQ <= 1;
 		else 
-			HBUSREQ <= HBUSREQ;
+			O_HBUSREQ <= O_HBUSREQ;
 
 //process transfer counter
 always @(posedge HCLK)
@@ -419,7 +419,7 @@ always @(posedge HCLK)
 		else 
 			transfer_count <= 4'h0;
 
-//HSIZE correction
+//O_HSIZE correction
 // always @(*)
 // 	if (!HRESETN_N)
 // 		size = 0;
@@ -434,5 +434,5 @@ assign O_RDATA = HRDATA;
 assign temp = I_ADDR[1:0] & 2'h3;
 assign LAST 	= ({1'b0,transfer_count} < (I_COUNT - 1))? 0 : 1;
 assign LIMIT 	= (addr_check[11:0] == 11'h400)? 1 : 0;
-assign HWRITE 	= I_WRITE;
+assign O_HWRITE 	= I_WRITE;
 endmodule
