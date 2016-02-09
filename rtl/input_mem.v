@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module input_mem (
     output reg [7:0] O_PIXEL_B,
     output reg [7:0] O_PIXEL_G,

@@ -9,7 +9,7 @@
 module core_set (
     output reg [31:0] 	O_ADDR,
     output reg [2:0] 	O_SIZE,
-    output reg	 	O_WRITE,
+    output reg 		O_WRITE,
     output reg	 	O_BUSY,
     output reg [4:0] 	O_COUNT,
 
