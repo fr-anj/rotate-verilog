@@ -51,11 +51,9 @@ module core_pixel (
     output reg [7:0] O_PIXEL_IN_ADDRG,
     output reg [7:0] O_PIXEL_IN_ADDRB,
 
-    //output reg O_DONE_READ,
-    //output reg O_DONE_WRITE,
+    input [15:0] I_HEIGHT,
+    input [15:0] I_WIDTH,
 
-    input [15:0] I_HEIGHT,	//TODO: remove this in specs and code
-    input [15:0] I_WIDTH,	//TODO: remove this in specs and code
     input 	 I_DIRECTION,
     input [1:0]	 I_DEGREES,
     input 	 I_DMA_READY,
@@ -269,7 +267,7 @@ always @(*)
 	end
     else
 	if (I_DIRECTION) //counter-clockwise
-	    case (I_DEGREES) //refer to function specification
+	    case (I_DEGREES) 
 		DEG_0:
 		    begin
 			pixel_r = 8'h00;
@@ -302,7 +300,7 @@ always @(*)
 		    end
 	    endcase
 	else //clockwise 
-	    case (I_DEGREES) //refer to function specification
+	    case (I_DEGREES) 
 		DEG_0:
 		    begin
 			pixel_r = 8'h00;
@@ -394,11 +392,7 @@ always @(posedge I_HCLK)
 		    end
 	endcase
 
-//data from input buffer to the output buffer - output buffer side
-//this is where rotation happens
-//
-// TODO: check if through mode or 180 since these do not need special rotation
-//     	 addresses
+//data from input buffer to the output buffer (output buffer side)
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
 	begin
@@ -407,7 +401,7 @@ always @(posedge I_HCLK)
 	    addr_b <= 8'h00;
 	end
     else
-	case (curr_state) //1 clock cycle delay from pixel out address
+	case (next_state) 
 	    IDLE:
 		begin
 		    addr_r <= pixel_r;

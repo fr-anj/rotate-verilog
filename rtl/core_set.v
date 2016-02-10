@@ -60,9 +60,9 @@ reg [17:0] row270; 	//read row
 reg [17:0] col270; 	//read column
 
 //address decrement or increment
-reg [15:0] dec90; 	//decrement 
-reg [15:0] dec180;	//decrement
-reg [15:0] inc270;	//increment
+reg [23:0] dec90; 	//decrement 
+reg [23:0] dec180;	//decrement
+reg [23:0] inc270;	//increment
 
 //signals
 reg LAST_HDIV;
@@ -72,8 +72,8 @@ reg FIRST;
 //height and width properties
 wire [17:0] HEIGHT;
 wire [17:0] WIDTH;
-wire [18:0] N_HEIGHT;
-wire [18:0] N_WIDTH;
+//wire [18:0] N_HEIGHT;
+//wire [18:0] N_WIDTH;
 wire [12:0] HDIV;
 wire [12:0] WDIV;
 wire [2:0] HMOD;
@@ -84,6 +84,8 @@ wire [4:0] WDEFICIT;
 //temp
 wire [15:0] temp1;
 wire [15:0] temp2;
+wire [13:0] HDIVMIN;
+wire [13:0] WDIVMIN;
 
 //address manipulation
 wire [23:0] START_90;
@@ -110,8 +112,8 @@ wire [31:0] out_address270;
 
 assign HEIGHT = I_HEIGHT * 2'h3;
 assign WIDTH = I_WIDTH * 2'h3;
-assign N_HEIGHT = new_height * 2'h3;
-assign N_WIDTH = new_width * 2'h3;
+//assign N_HEIGHT = new_height * 2'h3;
+//assign N_WIDTH = new_width * 2'h3;
 
 assign HDIV = new_height[15:3];
 assign WDIV = new_width[15:3];
@@ -122,17 +124,19 @@ assign WMOD = I_WIDTH[2:0];
 assign HDEFICIT = 4'h8 - {1'b0,HMOD};
 assign WDEFICIT = 4'h8 - {1'b0,WMOD};
 
-assign temp1 = (new_width - 4'h8) * I_HEIGHT;
+assign temp1 = (new_width - 4'h8) * {2'h0,I_HEIGHT};
 assign START_90 = temp1 * 2'h3;
 assign ROWDEC_90 = HEIGHT * 4'h8;
 
-assign temp2 = (new_height - 4'h8) * I_WIDTH;
+assign temp2 = (new_height - 4'h8) * {2'h0,I_WIDTH};
 assign START_180 = temp2 * 2'h3;
 assign ROWDEC_180 = WIDTH * 4'h8;
 assign COL_180 = WDIV * 5'h18;
 
-assign COL_270 = (HDIV - 1) * 5'h18; 
-assign ROWINC_270 = HEIGHT * 4'h8;
+assign HDIVMIN = HDIV - 1;
+assign WDIVMIN = WDIV - 1;
+assign COL_270 = HDIVMIN * 5'h18; 
+assign ROWINC_270 = ROWDEC_90;
 
 assign STOP_ROT = (I_HEIGHT[15] || (I_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
@@ -144,6 +148,27 @@ assign out_address0 = row0 + col0;
 assign out_address90 = row90 + col90;
 assign out_address180 = row180 + col180;
 assign out_address270 = row270 + col270;
+
+always @(*)
+    if (!I_HRESET_N)
+	O_SIZE = 3'h0;
+    else
+	O_SIZE = 3'h2; //32 bit
+
+always @(*)
+    if (!I_HRESET_N)
+	O_WRITE = 0;
+    else 
+	if (curr_state == WRITE)
+	    O_WRITE = 1;
+	else 
+	    O_WRITE = 0;
+
+always @(*)
+    if (!I_HRESET_N)
+	O_COUNT = 5'h00;
+    else 
+	O_COUNT = 5'h06; //6 bursts INCR
 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
@@ -165,7 +190,7 @@ always @(posedge I_HCLK)
     if (!I_HRESET_N)
 	LAST_HDIV <= 0;
     else 
-	if ((hdiv_count == (HDIV - 1)) && (set_count == 6'h3e))
+	if ((hdiv_count == HDIVMIN[11:0]) && (set_count == 6'h3e))
 	    LAST_HDIV <= 1;
 	else 
 	    LAST_HDIV <= 0;
@@ -174,7 +199,7 @@ always @(posedge I_HCLK)
     if (!I_HRESET_N)
 	LAST_WDIV <= 0;
     else 
-	if ((wdiv_count == (WDIV - 1)) && (set_count == 6'h3e))
+	if ((wdiv_count == WDIVMIN[11:0]) && (set_count == 6'h3e))
 	    LAST_WDIV <= 1;
 	else 
 	    LAST_WDIV <= 0;
@@ -414,7 +439,7 @@ always @(posedge I_HCLK)
 //current read column 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
-	dec90 = 16'h0000;
+	dec90 <= 16'h0000;
     else 
 	case (next_state)
 	    IDLE:
@@ -479,7 +504,7 @@ always @(posedge I_HCLK)
 //current read column 
 always @(posedge I_HCLK)
     if (!I_HRESET_N)
-	dec180 = 16'h0000;
+	dec180 <= 16'h0000;
     else 
 	case (next_state)
 	    IDLE:

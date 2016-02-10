@@ -96,7 +96,27 @@ initial begin
 
     @(posedge I_HCLK)
 	I_DMA_READY <= 1;
+
+    repeat(128) @(posedge I_HCLK);
+
+    I_DEGREES = 0;
+
+    //start sequence
+    @(posedge I_HCLK)
+	I_HRESET_N <= 0;
+
+    @(posedge I_HCLK)
+	I_HRESET_N <= 1;
+
+    @(posedge I_HCLK)
+	    I_START <= 1;
     
+    @(posedge I_HCLK)
+	I_START <= 0;
+
+    @(posedge I_HCLK)
+	I_DMA_READY <= 1;
+
     #3000;
     $finish;
 end

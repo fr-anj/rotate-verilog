@@ -12,10 +12,8 @@ module dmac (
     input [2:0]		I_SIZE,
     input [31:0] 	I_ADDR,
     input [4:0]		I_COUNT,
-    //input [31:0] 	I_PS_COUNT,
     input 		I_WRITE,
     input 		I_BUSY,
-    input [31:0] 	I_WDATA,
     input [31:0] 	I_HRDATA,
     input [7:0]		I_PIXEL_OUT_ADDRR,
     input [7:0]		I_PIXEL_OUT_ADDRG,
@@ -43,6 +41,7 @@ wire [7:0] PIXEL_G;
 wire [7:0] PIXEL_B;
 
 wire [31:0] DATA_READ_FROM_AHB;
+wire [31:0] DATA_WRITE_TO_AHB;
 
     ahbif AHB (
     .O_HBUSREQ(O_HBUSREQ),
@@ -57,7 +56,7 @@ wire [31:0] DATA_READ_FROM_AHB;
     .I_START(I_START),  
     .I_SIZE(I_SIZE), 
     .I_ADDR(I_ADDR),   
-    .I_WDATA(I_WDATA),  
+    .I_WDATA(DATA_WRITE_TO_AHB),  
     .I_COUNT(I_COUNT),  
     .I_WRITE(I_WRITE),  
     .I_BUSY(I_BUSY),   
@@ -68,7 +67,7 @@ wire [31:0] DATA_READ_FROM_AHB;
     );		
 
     output_mem OUTBUFF (
-    .O_WDATA(O_HWDATA),
+    .O_WDATA(DATA_WRITE_TO_AHB),
     .I_PIXEL_B(PIXEL_B),
     .I_PIXEL_G(PIXEL_G),
     .I_PIXEL_R(PIXEL_R),
@@ -87,7 +86,7 @@ wire [31:0] DATA_READ_FROM_AHB;
     .O_PIXEL_B(PIXEL_B),
     .O_PIXEL_G(PIXEL_G),
     .O_PIXEL_R(PIXEL_R),
-    .I_HWDATA(DATA_READ_FROM_AHB),
+    .I_RDATA(DATA_READ_FROM_AHB),
     .I_PIXEL_IN_ADDR0(I_PIXEL_IN_ADDR0),
     .I_PIXEL_IN_ADDR1(I_PIXEL_IN_ADDR1),
     .I_PIXEL_IN_ADDR2(I_PIXEL_IN_ADDR2),
