@@ -41,9 +41,15 @@ wire [5:0] address1;
 wire [5:0] address2;
 wire [5:0] address3;
 wire [5:0] address4;
+wire START;
+wire INTR_MASK;
+wire AFT_MASK;
+wire BEF_MASK;
+wire INTR_CLEAR;
 
 parameter ROT_IMG_NEW_H	= 6'h10,
           ROT_IMG_NEW_W	= 6'h14,
+          CTRL_START = 6'h20,
           CTRL_RESET = 6'h24,
           CTRL_BEF_MASK	= 6'h2c,	
           CTRL_AFT_MASK	= 6'h30,	
@@ -100,6 +106,18 @@ always @(posedge I_APBIF_PCLK)
 			REGISTER_FILE[address3]	<= I_APBIF_PWDATA[23:16];
 			REGISTER_FILE[address4]	<= I_APBIF_PWDATA[31:24];
 		    end
+                //########################################################
+                //#################SELF-CLEARING##########################
+                if (START)
+                    REGISTER_FILE[32'h00000020][0] <= 0;
+                else
+                    REGISTER_FILE[32'h00000020][0] <= REGISTER_FILE[32'h00000020][0];
+                if (INTR_CLEAR)
+                    REGISTER_FILE[32'h00000034][0] <= 0;
+                else 
+                    REGISTER_FILE[32'h00000034][0] <= REGISTER_FILE[32'h00000034][0];
+                //########################################################
+                //########################################################
 	    endcase
 	else
 	   for (j = 0; j < 60; j = j + 1)
@@ -143,5 +161,9 @@ assign O_APBIF_CTRL_BEF_MASK = REGISTER_FILE[6'h2c][0];
 assign O_APBIF_CTRL_AFT_MASK = REGISTER_FILE[6'h30][0];
 assign O_APBIF_CTRL_INTR_CLEAR = REGISTER_FILE[6'h34][0];
 assign O_APBIF_CTRL_BUSY = REGISTER_FILE[6'h38][0];
-
+assign START = REGISTER_FILE[6'h20][0];
+assign INTR_MASK = REGISTER_FILE[6'h28][0];
+assign BEF_MASK = REGISTER_FILE[6'h2c][0];
+assign AFT_MASK = REGISTER_FILE[6'h30][0];
+assign INTR_CLEAR = REGISTER_FILE[6'h34][0];
 endmodule
