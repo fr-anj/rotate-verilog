@@ -23,6 +23,7 @@ module core_pixel (
     input I_CP_DIRECTION,
     input I_CP_START,
     input I_CP_HRESET_N,
+    input I_CP_RESET,
     input I_CP_HCLK
 );
 
@@ -193,79 +194,72 @@ always @(posedge I_CP_HCLK)
 
 //initialization for rotated address
 always @(*)
-    if (!I_CP_HRESET_N)
-	begin
-	    pixel_r = 8'h00;
-	    pixel_g = 8'h00;
-	    pixel_b = 8'h00;
-	end
-    else
-	if (I_CP_DIRECTION) //counter-clockwise
-	    case (I_CP_DEGREES) 
-		P_DEG_0:
-		    begin
-			pixel_r = 8'h00;
-			pixel_g = 8'h01;
-			pixel_b = 8'h02;
-		    end
-		P_DEG_90:
-		    begin
-			pixel_r = 8'h15;
-			pixel_g = 8'h16;
-			pixel_b = 8'h17;
-		    end
-		P_DEG_180:
-		    begin
-			pixel_r = 8'hbd;
-			pixel_g = 8'hbe;
-			pixel_b = 8'hbf;
-		    end
-		P_DEG_270:
-		    begin
-			pixel_r = 8'ha8;
-			pixel_g = 8'ha9;
-			pixel_b = 8'haa;
-		    end
-		default:
-		    begin
-			pixel_r = 8'h00;
-			pixel_g = 8'h00;
-			pixel_b = 8'h00;
-		    end
-	    endcase
-	else //clockwise 
-	    case (I_CP_DEGREES) 
-		P_DEG_0:
-		    begin
-			pixel_r = 8'h00;
-			pixel_g = 8'h01;
-			pixel_b = 8'h02;
-		    end
-		P_DEG_90:
-		    begin
-			pixel_r = 8'ha8;
-			pixel_g = 8'ha9;
-			pixel_b = 8'haa;
-		    end
-		P_DEG_180:
-		    begin
-			pixel_r = 8'hbd;
-			pixel_g = 8'hbe;
-			pixel_b = 8'hbf;
-		    end
-		P_DEG_270:
-		    begin
-			pixel_r = 8'h15;
-			pixel_g = 8'h16;
-			pixel_b = 8'h17;
-		    end
-		default:
-		    begin
-			pixel_r = 8'h00;
-			pixel_g = 8'h00;
-			pixel_b = 8'h00;
-		    end
-	    endcase
+    if (I_CP_DIRECTION) //counter-clockwise
+        case (I_CP_DEGREES) 
+            P_DEG_0:
+                begin
+                    pixel_r = 8'h00;
+                    pixel_g = 8'h01;
+                    pixel_b = 8'h02;
+                end
+            P_DEG_90:
+                begin
+                    pixel_r = 8'h15;
+                    pixel_g = 8'h16;
+                    pixel_b = 8'h17;
+                end
+            P_DEG_180:
+                begin
+                    pixel_r = 8'hbd;
+                    pixel_g = 8'hbe;
+                    pixel_b = 8'hbf;
+                end
+            P_DEG_270:
+                begin
+                    pixel_r = 8'ha8;
+                    pixel_g = 8'ha9;
+                    pixel_b = 8'haa;
+                end
+            default:
+                begin
+                    pixel_r = 8'h00;
+                    pixel_g = 8'h00;
+                    pixel_b = 8'h00;
+                end
+        endcase
+    else //clockwise 
+        case (I_CP_DEGREES) 
+            P_DEG_0:
+                begin
+                    pixel_r = 8'h00;
+                    pixel_g = 8'h01;
+                    pixel_b = 8'h02;
+                end
+            P_DEG_90:
+                begin
+                    pixel_r = 8'ha8;
+                    pixel_g = 8'ha9;
+                    pixel_b = 8'haa;
+                end
+            P_DEG_180:
+                begin
+                    pixel_r = 8'hbd;
+                    pixel_g = 8'hbe;
+                    pixel_b = 8'hbf;
+                end
+            P_DEG_270:
+                begin
+                    pixel_r = 8'h15;
+                    pixel_g = 8'h16;
+                    pixel_b = 8'h17;
+                end
+            default:
+                begin
+                    pixel_r = 8'h00;
+                    pixel_g = 8'h00;
+                    pixel_b = 8'h00;
+                end
+        endcase
 
 //base address increment/decremet for 90 deg or 270 deg
 always @(posedge I_CP_HCLK)
@@ -459,13 +453,6 @@ always @(posedge I_CP_HCLK)
                             O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2;
                             O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3;
                         end
-            else 
-                    begin
-                        O_CP_PIXEL_OUT_ADDR0 <= O_CP_PIXEL_OUT_ADDR0;
-                        O_CP_PIXEL_OUT_ADDR1 <= O_CP_PIXEL_OUT_ADDR1;
-                        O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2;
-                        O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3;
-                    end
 	endcase
 
 endmodule

@@ -1,4 +1,3 @@
-*
 `timescale 1ns/1ps
 
 module core_set (
@@ -6,6 +5,9 @@ module core_set (
     output reg [4:0] O_CS_COUNT,
     output reg [2:0] O_CS_SIZE,
     output reg O_CS_WRITE,
+    output [15:0] O_CS_NEW_H, 
+    output [15:0] O_CS_NEW_W, 
+
 
     input [15:0] I_CS_HEIGHT,
     input [15:0] I_CS_WIDTH,
@@ -13,6 +15,7 @@ module core_set (
     input I_CS_DIRECTION,
     input I_CS_START,
     input I_CS_HRESET_N,
+    input I_CS_RESET,
     input I_CS_HCLK
 );
 
@@ -121,7 +124,7 @@ assign ROWDEC_90 = HEIGHT << 3;
 assign temp2 = (new_height - 4'h8) * {2'h0,I_CS_WIDTH};
 assign START_180 = (temp2 << 1) + temp2;
 assign ROWDEC_180 = WIDTH << 3; //WIDTH * 8
-assign COL_180 = (WDIV << 4) + (WDIV << 3): //WDIV * 24
+assign COL_180 = (WDIV << 4) + (WDIV << 3); //WDIV * 24
 
 assign HDIVMIN = HDIV - 1;
 assign WDIVMIN = WDIV - 1;
@@ -139,26 +142,20 @@ assign out_address90 = row90 + col90;
 assign out_address180 = row180 + col180;
 assign out_address270 = row270 + col270;
 
-always @(*)
-    if (!I_CS_HRESET_N)
-	O_CS_SIZE = 3'h0;
-    else
-	O_CS_SIZE = 3'h2; //32 bit
+assign O_CS_NEW_H = N_HEIGHT;
+assign O_CS_NEW_W = N_WIDTH;
 
 always @(*)
-    if (!I_CS_HRESET_N)
-	O_CS_WRITE = 0;
-    else 
-	if (curr_state == P_WRITE)
-	    O_CS_WRITE = 1;
-	else 
-	    O_CS_WRITE = 0;
+    O_CS_SIZE = 3'h2; //32 bit
 
 always @(*)
-    if (!I_CS_HRESET_N)
-	O_CS_COUNT = 5'h00;
+    if (curr_state == P_WRITE)
+        O_CS_WRITE = 1;
     else 
-	O_CS_COUNT = 5'h06; //6 bursts INCR
+        O_CS_WRITE = 0;
+
+always @(*)
+    O_CS_COUNT = 5'h06; //6 bursts INCR
 
 always @(posedge I_CS_HCLK)
     if (!I_CS_HRESET_N)
@@ -237,24 +234,18 @@ always @(*)
 
 // out_addressput image height 
 always @(*)
-    if (!I_CS_HRESET_N)
-	new_height = 16'h0000;
-    else
-	if ((I_CS_HEIGHT & 16'h0007) == 16'h0000)
-	    new_height = I_CS_HEIGHT;
-	else 
-	    new_height = I_CS_HEIGHT + {11'h000,HDEFICIT};
+    if ((I_CS_HEIGHT & 16'h0007) == 16'h0000)
+        new_height = I_CS_HEIGHT;
+    else 
+        new_height = I_CS_HEIGHT + {11'h000,HDEFICIT};
 
 // out_addressput image height 
 
 always @(*)
-    if (!I_CS_HRESET_N)
-	new_width = 16'h0000;
-    else
-	if ((I_CS_WIDTH & 16'h0007) == 16'h0000)
-	    new_width = I_CS_WIDTH;
-	else 
-	    new_width = I_CS_WIDTH + {11'h000,WDEFICIT};
+    if ((I_CS_WIDTH & 16'h0007) == 16'h0000)
+        new_width = I_CS_WIDTH;
+    else 
+        new_width = I_CS_WIDTH + {11'h000,WDEFICIT};
 
 //count to 64
 always @(posedge I_CS_HCLK)
@@ -608,41 +599,38 @@ always @(posedge I_CS_HCLK)
 //*****************************************************//
 
 always @(*)
-    if (!I_CS_HRESET_N)
-	O_CS_ADDR = 32'h00000000;
-    else 
-	case (curr_state)
-	    P_READ:
-		O_CS_ADDR = out_address;
-	    P_WRITE:
-		if (I_CS_DIRECTION)
-		    case (I_CS_DEGREES)
-			P_DEG_0:
-			    O_CS_ADDR = out_address0;
-			P_DEG_90:
-			    O_CS_ADDR = out_address90;
-			P_DEG_180:
-			    O_CS_ADDR = out_address180;
-			P_DEG_270:
-			    O_CS_ADDR = out_address270;
-			default:
-			    O_CS_ADDR = out_address;
-		    endcase
-		else 
-		    case (I_CS_DEGREES)
-			P_DEG_0:
-			    O_CS_ADDR = out_address0; 
-			P_DEG_90:
-			    O_CS_ADDR = out_address270;
-			P_DEG_180:
-			    O_CS_ADDR = out_address180; 
-			P_DEG_270:
-			    O_CS_ADDR = out_address90;
-			default:
-			    O_CS_ADDR = out_address; 
-		    endcase
-	    default:
-		O_CS_ADDR = 32'h00000000;
-	endcase
+    case (curr_state)
+        P_READ:
+            O_CS_ADDR = out_address;
+        P_WRITE:
+            if (I_CS_DIRECTION)
+                case (I_CS_DEGREES)
+                    P_DEG_0:
+                        O_CS_ADDR = out_address0;
+                    P_DEG_90:
+                        O_CS_ADDR = out_address90;
+                    P_DEG_180:
+                        O_CS_ADDR = out_address180;
+                    P_DEG_270:
+                        O_CS_ADDR = out_address270;
+                    default:
+                        O_CS_ADDR = out_address;
+                endcase
+            else 
+                case (I_CS_DEGREES)
+                    P_DEG_0:
+                        O_CS_ADDR = out_address0; 
+                    P_DEG_90:
+                        O_CS_ADDR = out_address270;
+                    P_DEG_180:
+                        O_CS_ADDR = out_address180; 
+                    P_DEG_270:
+                        O_CS_ADDR = out_address90;
+                    default:
+                        O_CS_ADDR = out_address; 
+                endcase
+        default:
+            O_CS_ADDR = 32'h00000000;
+    endcase
 
 endmodule

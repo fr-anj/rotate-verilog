@@ -7,8 +7,6 @@ module apbif (
     output [31:0] O_APBIF_DMA_DST_IMG,
     output [15:0] O_APBIF_ROT_IMG_H,
     output [15:0] O_APBIF_ROT_IMG_W,
-    output [15:0] O_APBIF_ROT_IMG_NEW_H,
-    output [15:0] O_APBIF_ROT_IMG_NEW_W,
     output [1:0] O_APBIF_ROT_IMG_MODE,
     output O_APBIF_ROT_IMG_DIR,
     output O_APBIF_CTRL_START,
@@ -18,8 +16,6 @@ module apbif (
     input [31:0] I_APBIF_PWDATA,
     input [15:0] I_APBIF_ROT_IMG_NEW_H,
     input [15:0] I_APBIF_ROT_IMG_NEW_W,
-    input I_APBIF_CTRL_BEF_MASK,
-    input I_APBIF_CTRL_AFT_MASK,
     input I_APBIF_PSEL,
     input I_APBIF_PENABLE,
     input I_APBIF_PWRITE,
@@ -35,11 +31,6 @@ wire [5:0] address1;
 wire [5:0] address2;
 wire [5:0] address3;
 wire [5:0] address4;
-wire START;
-wire INTR_MASK;
-wire AFT_MASK;
-wire BEF_MASK;
-wire INTR_CLEAR;
 
 parameter ROT_IMG_NEW_H	= 6'h10,
           ROT_IMG_NEW_W	= 6'h14,
@@ -84,10 +75,6 @@ always @(posedge I_APBIF_PCLK)
 			REGISTER_FILE[address1] <= I_APBIF_ROT_IMG_NEW_W[7:0];
 			REGISTER_FILE[address2] <= I_APBIF_ROT_IMG_NEW_W[15:8];
 		    end
-		CTRL_BEF_MASK:
-		    REGISTER_FILE[address1][0] <= I_APBIF_CTRL_BEF_MASK;
-		CTRL_AFT_MASK:
-		    REGISTER_FILE[address1][0] <= I_APBIF_CTRL_AFT_MASK;
 		//########################################################
 		//########################################################
 		default:
@@ -96,19 +83,15 @@ always @(posedge I_APBIF_PCLK)
 			REGISTER_FILE[address2]	<= I_APBIF_PWDATA[15:8];
 			REGISTER_FILE[address3]	<= I_APBIF_PWDATA[23:16];
 			REGISTER_FILE[address4]	<= I_APBIF_PWDATA[31:24];
-		    end
-                //########################################################
-                //#################SELF-CLEARING##########################
-                if (START)
-                    REGISTER_FILE[32'h00000020][0] <= 0;
-                else
-                    REGISTER_FILE[32'h00000020][0] <= REGISTER_FILE[32'h00000020][0];
-                if (INTR_CLEAR)
-                    REGISTER_FILE[32'h00000034][0] <= 0;
-                else 
-                    REGISTER_FILE[32'h00000034][0] <= REGISTER_FILE[32'h00000034][0];
-                //########################################################
-                //########################################################
+                        //########################################################
+                        //#################SELF-CLEARING##########################
+                        if (O_APBIF_CTRL_START)
+                            REGISTER_FILE[32'h00000020][0] <= 0;
+                        else
+                            REGISTER_FILE[32'h00000020][0] <= REGISTER_FILE[32'h00000020][0];
+                        //########################################################
+                        //########################################################
+                    end
 	    endcase
 	else
 	   for (j = 0; j < 60; j = j + 1)
@@ -141,15 +124,10 @@ assign O_APBIF_DMA_SRC_IMG = {REGISTER_FILE[6'h03],REGISTER_FILE[6'h02],REGISTER
 assign O_APBIF_DMA_DST_IMG = {REGISTER_FILE[6'h07],REGISTER_FILE[6'h06],REGISTER_FILE[6'h05],REGISTER_FILE[6'h04]};
 assign O_APBIF_ROT_IMG_H = {REGISTER_FILE[6'h09],REGISTER_FILE[6'h08]};
 assign O_APBIF_ROT_IMG_W = {REGISTER_FILE[6'h0d],REGISTER_FILE[6'h0c]};
-assign O_APBIF_ROT_IMG_NEW_H = {REGISTER_FILE[6'h11],REGISTER_FILE[6'h10]};
-assign O_APBIF_ROT_IMG_NEW_W = {REGISTER_FILE[6'h15],REGISTER_FILE[6'h14]};
 assign O_APBIF_ROT_IMG_MODE = REGISTER_FILE[6'h18][1:0]; 
 assign O_APBIF_ROT_IMG_DIR = REGISTER_FILE[6'h1c][0];
 assign O_APBIF_CTRL_START = REGISTER_FILE[6'h20][0];
 assign O_APBIF_CTRL_RESET = REGISTER_FILE[6'h24][0];
 assign O_APBIF_CTRL_INTR_MASK = REGISTER_FILE[6'h28][0];
-assign O_APBIF_CTRL_BEF_MASK = REGISTER_FILE[6'h2c][0];
-assign O_APBIF_CTRL_AFT_MASK = REGISTER_FILE[6'h30][0];
-assign O_APBIF_CTRL_INTR_CLEAR = REGISTER_FILE[6'h34][0];
 
 endmodule

@@ -72,56 +72,53 @@ always @(posedge I_AHBIF_HCLK)
 
 //next state
 always @(*)
-	if (!I_AHBIF_HRESET_N)
-		next_state = p_s_idle;
-	else 
-		case (curr_state)
-			p_s_idle:
-				if (I_AHBIF_START)
-					next_state = p_s_busreq;
-				else 
-					next_state = p_s_idle;
-			p_s_busreq:
-				if (I_AHBIF_HREADY)
-					if (I_AHBIF_HGRANT)
-						next_state = p_s_nseq;
-					else 
-						next_state = p_s_busreq;
-				else 
-					next_state = p_s_busreq;
-			p_s_nseq:
-				if (I_AHBIF_HREADY)
-                                        if (LAST)
-                                                next_state = p_s_finish;
+        case (curr_state)
+                p_s_idle:
+                        if (I_AHBIF_START)
+                                next_state = p_s_busreq;
+                        else 
+                                next_state = p_s_idle;
+                p_s_busreq:
+                        if (I_AHBIF_HREADY)
+                                if (I_AHBIF_HGRANT)
+                                        next_state = p_s_nseq;
+                                else 
+                                        next_state = p_s_busreq;
+                        else 
+                                next_state = p_s_busreq;
+                p_s_nseq:
+                        if (I_AHBIF_HREADY)
+                                if (LAST)
+                                        next_state = p_s_finish;
+                                else 
+                                        if (LIMIT)
+                                                next_state = p_s_nseq;
                                         else 
-                                                if (LIMIT)
-                                                        next_state = p_s_nseq;
-                                                else 
-                                                        next_state = p_s_seq;
-				else 
-					next_state = p_s_nseq;
-			p_s_seq:
-				if (I_AHBIF_HREADY)
-                                        if (LAST)
-                                                next_state = p_s_finish;
+                                                next_state = p_s_seq;
+                        else 
+                                next_state = p_s_nseq;
+                p_s_seq:
+                        if (I_AHBIF_HREADY)
+                                if (LAST)
+                                        next_state = p_s_finish;
+                                else 
+                                        if (LIMIT)
+                                                next_state = p_s_nseq;
                                         else 
-                                                if (LIMIT)
-                                                        next_state = p_s_nseq;
-                                                else 
-                                                        next_state = p_s_seq;
-				else 
-					next_state = p_s_seq;
-			p_s_finish:
-				if (I_AHBIF_HREADY)
-					if (I_AHBIF_START)
-						next_state = p_s_busreq;
-					else 
-						next_state = p_s_idle;
-				else 
-					next_state = p_s_finish;
-			default:
-				next_state = p_s_idle;
-		endcase
+                                                next_state = p_s_seq;
+                        else 
+                                next_state = p_s_seq;
+                p_s_finish:
+                        if (I_AHBIF_HREADY)
+                                if (I_AHBIF_START)
+                                        next_state = p_s_busreq;
+                                else 
+                                        next_state = p_s_idle;
+                        else 
+                                next_state = p_s_finish;
+                default:
+                        next_state = p_s_idle;
+        endcase
 
 //address output 
 always @(*)
@@ -131,23 +128,20 @@ always @(*)
 
 //address alignment
 always @(*)
-	if (!I_AHBIF_HRESET_N)
-		address = 32'h00000000;
-	else 
-		case (I_AHBIF_SIZE)
-			P_B16:
-				if (I_AHBIF_ADDR[0] != 1'b0)
-					address = I_AHBIF_ADDR + 32'h00000001;
-				else 
-					address = I_AHBIF_ADDR;
-			P_B32:
-				if (I_AHBIF_ADDR[1:0] != 2'b00)
-					address = I_AHBIF_ADDR + {29'h00000000,(3'h4 - {1'b0,temp})};
-				else 
-					address = I_AHBIF_ADDR;
-			default:
-				address = I_AHBIF_ADDR;
-		endcase
+        case (I_AHBIF_SIZE)
+                P_B16:
+                        if (I_AHBIF_ADDR[0] != 1'b0)
+                                address = I_AHBIF_ADDR + 32'h00000001;
+                        else 
+                                address = I_AHBIF_ADDR;
+                P_B32:
+                        if (I_AHBIF_ADDR[1:0] != 2'b00)
+                                address = I_AHBIF_ADDR + {29'h00000000,(3'h4 - {1'b0,temp})};
+                        else 
+                                address = I_AHBIF_ADDR;
+                default:
+                        address = I_AHBIF_ADDR;
+        endcase
 
 //address calculation
 always @(posedge I_AHBIF_HCLK)

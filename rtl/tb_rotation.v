@@ -23,31 +23,34 @@ module tb_rotation ();
     reg I_HCLK;
 
     rotation ROT0 (
-    .O_REG_PRDATA(O_REG_PRDATA);
-    .O_DMA_HADDR(O_DMA_HADDR);
-    .O_DMA_HWDATA(O_DMA_HWDATA);
-    .O_DMA_HTRANS(O_DMA_HTRANS);
-    .O_DMA_HSIZE(O_DMA_HSIZE);
-    .O_DMA_HBURST(O_DMA_HBURST);
-    .O_DMA_HBUSREQ(O_DMA_HBUSREQ);
-    .O_DMA_HWRITE(O_DMA_HWRITE);
-    .O_INTR_DONE(O_INTR_DONE);
-    .I_REG_PADDR(I_REG_PADDR);
-    .I_REG_PWDATA(I_REG_PWDATA);
-    .I_DMA_HRDATA(I_DMA_HRDATA);
-    .I_REG_PSEL(I_REG_PSEL);
-    .I_REG_PENABLE(I_REG_PENABLE);
-    .I_REG_PWRITE(I_REG_PWRITE);
-    .I_DMA_HGRANT(I_DMA_HGRANT);
-    .I_DMA_HREADY(I_DMA_HREADY);
-    .I_PRESET_N(I_PRESET_N);
-    .I_HRESET_N(I_HRESET_N);
-    .I_PCLK(I_PCLK);
-    .I_HCLK(I_HCLK);
+    .O_REG_PRDATA(O_REG_PRDATA),
+    .O_DMA_HADDR(O_DMA_HADDR),
+    .O_DMA_HWDATA(O_DMA_HWDATA),
+    .O_DMA_HTRANS(O_DMA_HTRANS),
+    .O_DMA_HSIZE(O_DMA_HSIZE),
+    .O_DMA_HBURST(O_DMA_HBURST),
+    .O_DMA_HBUSREQ(O_DMA_HBUSREQ),
+    .O_DMA_HWRITE(O_DMA_HWRITE),
+    .O_INTR_DONE(O_INTR_DONE),
+    .I_REG_PADDR(I_REG_PADDR),
+    .I_REG_PWDATA(I_REG_PWDATA),
+    .I_DMA_HRDATA(I_DMA_HRDATA),
+    .I_REG_PSEL(I_REG_PSEL),
+    .I_REG_PENABLE(I_REG_PENABLE),
+    .I_REG_PWRITE(I_REG_PWRITE),
+    .I_DMA_HGRANT(I_DMA_HGRANT),
+    .I_DMA_HREADY(I_DMA_HREADY),
+    .I_PRESET_N(I_PRESET_N),
+    .I_HRESET_N(I_HRESET_N),
+    .I_PCLK(I_PCLK),
+    .I_HCLK(I_HCLK)
     );
 
     always 
         #10 I_HCLK <= ~I_HCLK;
+
+    always @(posedge I_HCLK)
+        I_PCLK <= ~I_PCLK;
 
     initial begin 
         I_REG_PADDR = 0;
@@ -58,14 +61,45 @@ module tb_rotation ();
         I_REG_PWRITE = 0;
         I_DMA_HGRANT = 0;
         I_DMA_HREADY = 0;
-        I_PRESET_N = 0;
-        I_HRESET_N = 0;
+        I_PRESET_N = 1;
+        I_HRESET_N = 1;
         I_PCLK = 0;
         I_HCLK = 0;
     end
 
     initial begin
         $vcdpluson;
+
+        //functional specifications Verification 
+        //soft reset no transaction
+
+        //set up image
+
+        //perform reset
+        @(posedge I_HCLK)
+            begin 
+                I_HRESET_N <= 0;
+                I_PRESET_N <= 0;
+            end
+
+        @(posedge I_HCLK)
+            begin
+                I_HRESET_N <= 1;
+                I_PRESET_N <= 1;
+            end
+
+        //soft reset ongoing transaction
+        @(posedge I_HCLK)
+            begin 
+                I_HRESET_N <= 0;
+                I_PRESET_N <= 0;
+            end
+
+        @(posedge I_HCLK)
+            begin
+                I_HRESET_N <= 1;
+                I_PRESET_N <= 1;
+            end
 
         #30000 $finish;
     end
