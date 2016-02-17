@@ -13,11 +13,6 @@ module apbif (
     output O_APBIF_ROT_IMG_DIR,
     output O_APBIF_CTRL_START,
     output O_APBIF_CTRL_RESET,
-    output O_APBIF_CTRL_INTR_MASK,
-    output O_APBIF_CTRL_BEF_MASK,	
-    output O_APBIF_CTRL_AFT_MASK,	
-    output O_APBIF_CTRL_INTR_CLEAR,
-    output O_APBIF_CTRL_BUSY,		
 
     input [31:0] I_APBIF_PADDR,
     input [31:0] I_APBIF_PWDATA,
@@ -25,7 +20,6 @@ module apbif (
     input [15:0] I_APBIF_ROT_IMG_NEW_W,
     input I_APBIF_CTRL_BEF_MASK,
     input I_APBIF_CTRL_AFT_MASK,
-    input I_APBIF_CTRL_BUSY,
     input I_APBIF_PSEL,
     input I_APBIF_PENABLE,
     input I_APBIF_PWRITE,
@@ -53,8 +47,7 @@ parameter ROT_IMG_NEW_H	= 6'h10,
           CTRL_RESET = 6'h24,
           CTRL_BEF_MASK	= 6'h2c,	
           CTRL_AFT_MASK	= 6'h30,	
-          CTRL_INTR_CLEAR = 6'h34,
-          CTRL_BUSY = 6'h38;		
+          CTRL_INTR_CLEAR = 6'h34;
 
 assign address1 = {I_APBIF_PADDR[5:2],2'h0};
 assign address2 = address1 + 6'h01;
@@ -95,8 +88,6 @@ always @(posedge I_APBIF_PCLK)
 		    REGISTER_FILE[address1][0] <= I_APBIF_CTRL_BEF_MASK;
 		CTRL_AFT_MASK:
 		    REGISTER_FILE[address1][0] <= I_APBIF_CTRL_AFT_MASK;
-		CTRL_BUSY:
-		    REGISTER_FILE[address1][0] <= I_APBIF_CTRL_BUSY;
 		//########################################################
 		//########################################################
 		default:
@@ -160,10 +151,5 @@ assign O_APBIF_CTRL_INTR_MASK = REGISTER_FILE[6'h28][0];
 assign O_APBIF_CTRL_BEF_MASK = REGISTER_FILE[6'h2c][0];
 assign O_APBIF_CTRL_AFT_MASK = REGISTER_FILE[6'h30][0];
 assign O_APBIF_CTRL_INTR_CLEAR = REGISTER_FILE[6'h34][0];
-assign O_APBIF_CTRL_BUSY = REGISTER_FILE[6'h38][0];
-assign START = REGISTER_FILE[6'h20][0];
-assign INTR_MASK = REGISTER_FILE[6'h28][0];
-assign BEF_MASK = REGISTER_FILE[6'h2c][0];
-assign AFT_MASK = REGISTER_FILE[6'h30][0];
-assign INTR_CLEAR = REGISTER_FILE[6'h34][0];
+
 endmodule

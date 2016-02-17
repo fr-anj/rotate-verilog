@@ -25,7 +25,6 @@ module dma (
     output [1:0] O_DMA_HTRANS,
     output [2:0] O_DMA_HSIZE,
     output [2:0] O_DMA_HBURST,
-    output O_DMA_READY,
     output O_DMA_HBUSREQ,
     output O_DMA_HWRITE,
     
@@ -48,7 +47,6 @@ module dma (
     input [4:0] I_DMA_COUNT,
     input [2:0] I_DMA_SIZE,
     input I_DMA_WRITE,
-    input I_DMA_BUSY,
     input I_DMA_START,
     input I_DMA_HGRANT,
     input I_DMA_HREADY,
@@ -79,7 +77,6 @@ wire [31:0] DATA_WRITE_TO_AHB;
     .I_AHB_WDATA(DATA_WRITE_TO_AHB),  
     .I_AHB_COUNT(I_DMA_COUNT),  
     .I_AHB_WRITE(I_DMA_WRITE),  
-    .I_AHB_BUSY(I_DMA_BUSY),   
     .I_AHB_HGRANT(I_DMA_HGRANT),   
     .I_AHB_HREADY(I_DMA_HREADY),   
     .I_AHB_HRESET_N(I_DMA_HRESET_N),	

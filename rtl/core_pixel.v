@@ -21,7 +21,6 @@ module core_pixel (
     input [15:0] I_CP_WIDTH,
     input [1:0]	 I_CP_DEGREES,
     input I_CP_DIRECTION,
-    input I_CP_DMA_READY,
     input I_CP_START,
     input I_CP_HRESET_N,
     input I_CP_HCLK
@@ -109,20 +108,14 @@ always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	trans_count <= 6'h00;
     else 
-	if (I_CP_DMA_READY)
-	    trans_count <= trans_count + 1;
-	else 
-	    trans_count <= trans_count; //pause count up
+        trans_count <= trans_count + 1;
 
 //count to 8
 always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	beat_count <= 3'h0;
     else 
-	if (I_CP_DMA_READY)
-	    beat_count <= beat_count + 1;
-	else 
-	    beat_count <= beat_count;
+        beat_count <= beat_count + 1;
 
 //data from AHB to input buffer - input buffer side
 always @(posedge I_CP_HCLK)
@@ -151,28 +144,20 @@ always @(posedge I_CP_HCLK)
 			O_CP_PIXEL_IN_ADDR3 <= 8'h03;
 		    end
 		else
-		    if (I_CP_DMA_READY)
-			if ((beat_count != 3'h5) && (beat_count != 3'h6))
-			    begin
-				O_CP_PIXEL_IN_ADDR0 <= O_CP_PIXEL_IN_ADDR0 + 4;
-				O_CP_PIXEL_IN_ADDR1 <= O_CP_PIXEL_IN_ADDR1 + 4;
-				O_CP_PIXEL_IN_ADDR2 <= O_CP_PIXEL_IN_ADDR2 + 4;
-				O_CP_PIXEL_IN_ADDR3 <= O_CP_PIXEL_IN_ADDR3 + 4;
-			    end
-			else 
-			    begin
-				O_CP_PIXEL_IN_ADDR0 <= O_CP_PIXEL_IN_ADDR0;
-				O_CP_PIXEL_IN_ADDR1 <= O_CP_PIXEL_IN_ADDR1;
-				O_CP_PIXEL_IN_ADDR2 <= O_CP_PIXEL_IN_ADDR2;
-				O_CP_PIXEL_IN_ADDR3 <= O_CP_PIXEL_IN_ADDR3;
-			    end
-		    else 
-			begin
-			    O_CP_PIXEL_IN_ADDR0 <= O_CP_PIXEL_IN_ADDR0;
-			    O_CP_PIXEL_IN_ADDR1 <= O_CP_PIXEL_IN_ADDR1;
-			    O_CP_PIXEL_IN_ADDR2 <= O_CP_PIXEL_IN_ADDR2;
-			    O_CP_PIXEL_IN_ADDR3 <= O_CP_PIXEL_IN_ADDR3;
-			end
+                    if ((beat_count != 3'h5) && (beat_count != 3'h6))
+                        begin
+                            O_CP_PIXEL_IN_ADDR0 <= O_CP_PIXEL_IN_ADDR0 + 4;
+                            O_CP_PIXEL_IN_ADDR1 <= O_CP_PIXEL_IN_ADDR1 + 4;
+                            O_CP_PIXEL_IN_ADDR2 <= O_CP_PIXEL_IN_ADDR2 + 4;
+                            O_CP_PIXEL_IN_ADDR3 <= O_CP_PIXEL_IN_ADDR3 + 4;
+                        end
+                    else 
+                        begin
+                            O_CP_PIXEL_IN_ADDR0 <= O_CP_PIXEL_IN_ADDR0;
+                            O_CP_PIXEL_IN_ADDR1 <= O_CP_PIXEL_IN_ADDR1;
+                            O_CP_PIXEL_IN_ADDR2 <= O_CP_PIXEL_IN_ADDR2;
+                            O_CP_PIXEL_IN_ADDR3 <= O_CP_PIXEL_IN_ADDR3;
+                        end
 	endcase
 
 //data from input buffer to output buffer - input buffer side
@@ -192,25 +177,18 @@ always @(posedge I_CP_HCLK)
 		    O_CP_PIXEL_OUT_ADDRB <= 8'h02;
 		end
 	    P_READ:
-		if (I_CP_DMA_READY)
-		    if (trans_count == 6'h3f)
-			begin 
-			    O_CP_PIXEL_OUT_ADDRR <= 8'h00;
-			    O_CP_PIXEL_OUT_ADDRG <= 8'h01;
-			    O_CP_PIXEL_OUT_ADDRB <= 8'h02;
-			end
-		    else
-			begin
-			    O_CP_PIXEL_OUT_ADDRR <= O_CP_PIXEL_OUT_ADDRR + 3;
-			    O_CP_PIXEL_OUT_ADDRG <= O_CP_PIXEL_OUT_ADDRG + 3;
-			    O_CP_PIXEL_OUT_ADDRB <= O_CP_PIXEL_OUT_ADDRB + 3;
-			end
-		else 
-		    begin
-			O_CP_PIXEL_OUT_ADDRR <= O_CP_PIXEL_OUT_ADDRR;
-			O_CP_PIXEL_OUT_ADDRG <= O_CP_PIXEL_OUT_ADDRG;
-			O_CP_PIXEL_OUT_ADDRB <= O_CP_PIXEL_OUT_ADDRB;
-		    end
+                if (trans_count == 6'h3f)
+                    begin 
+                        O_CP_PIXEL_OUT_ADDRR <= 8'h00;
+                        O_CP_PIXEL_OUT_ADDRG <= 8'h01;
+                        O_CP_PIXEL_OUT_ADDRB <= 8'h02;
+                    end
+                else
+                    begin
+                        O_CP_PIXEL_OUT_ADDRR <= O_CP_PIXEL_OUT_ADDRR + 3;
+                        O_CP_PIXEL_OUT_ADDRG <= O_CP_PIXEL_OUT_ADDRG + 3;
+                        O_CP_PIXEL_OUT_ADDRB <= O_CP_PIXEL_OUT_ADDRB + 3;
+                    end
 	endcase
 
 //initialization for rotated address
@@ -365,7 +343,7 @@ always @(posedge I_CP_HCLK)
 		    addr_b <= pixel_b;
 		end
 	    P_READ:
-		if (I_CP_DMA_READY && (next_state != P_WRITE))
+		if (next_state != P_WRITE)
 		    if (increment)
 			if (beat_count == 3'h7)
 			    begin
@@ -459,36 +437,35 @@ always @(posedge I_CP_HCLK)
 		    O_CP_PIXEL_OUT_ADDR3 <= 8'h03;
 		end
 	    P_WRITE:
-		if (I_CP_DMA_READY)
-		    if (trans_count == 6'h3f)
-			begin
-			    O_CP_PIXEL_OUT_ADDR0 <= 8'h00;
-			    O_CP_PIXEL_OUT_ADDR1 <= 8'h01;
-			    O_CP_PIXEL_OUT_ADDR2 <= 8'h02;
-			    O_CP_PIXEL_OUT_ADDR3 <= 8'h03;
-			end
-		    else
-			if ((beat_count != 3'h5) && (beat_count != 3'h6))
-			    begin
-				O_CP_PIXEL_OUT_ADDR0 <= O_CP_PIXEL_OUT_ADDR0 + 4;
-				O_CP_PIXEL_OUT_ADDR1 <= O_CP_PIXEL_OUT_ADDR1 + 4;
-				O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2 + 4;
-				O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3 + 4;
-			    end
-			else 
-			    begin
-				O_CP_PIXEL_OUT_ADDR0 <= O_CP_PIXEL_OUT_ADDR0;
-				O_CP_PIXEL_OUT_ADDR1 <= O_CP_PIXEL_OUT_ADDR1;
-				O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2;
-				O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3;
-			    end
-		else 
-			begin
-			    O_CP_PIXEL_OUT_ADDR0 <= O_CP_PIXEL_OUT_ADDR0;
-			    O_CP_PIXEL_OUT_ADDR1 <= O_CP_PIXEL_OUT_ADDR1;
-			    O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2;
-			    O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3;
-			end
+                if (trans_count == 6'h3f)
+                    begin
+                        O_CP_PIXEL_OUT_ADDR0 <= 8'h00;
+                        O_CP_PIXEL_OUT_ADDR1 <= 8'h01;
+                        O_CP_PIXEL_OUT_ADDR2 <= 8'h02;
+                        O_CP_PIXEL_OUT_ADDR3 <= 8'h03;
+                    end
+                else
+                    if ((beat_count != 3'h5) && (beat_count != 3'h6))
+                        begin
+                            O_CP_PIXEL_OUT_ADDR0 <= O_CP_PIXEL_OUT_ADDR0 + 4;
+                            O_CP_PIXEL_OUT_ADDR1 <= O_CP_PIXEL_OUT_ADDR1 + 4;
+                            O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2 + 4;
+                            O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3 + 4;
+                        end
+                    else 
+                        begin
+                            O_CP_PIXEL_OUT_ADDR0 <= O_CP_PIXEL_OUT_ADDR0;
+                            O_CP_PIXEL_OUT_ADDR1 <= O_CP_PIXEL_OUT_ADDR1;
+                            O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2;
+                            O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3;
+                        end
+            else 
+                    begin
+                        O_CP_PIXEL_OUT_ADDR0 <= O_CP_PIXEL_OUT_ADDR0;
+                        O_CP_PIXEL_OUT_ADDR1 <= O_CP_PIXEL_OUT_ADDR1;
+                        O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2;
+                        O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3;
+                    end
 	endcase
 
 endmodule

@@ -17,7 +17,6 @@ module ahbif (
 	input [2:0] I_AHBIF_SIZE, //from register file
 	input I_AHBIF_START, //from register file
 	input I_AHBIF_WRITE, //from core
-	input I_AHBIF_BUSY, //from core
 	input I_AHBIF_HGRANT, //from arbiter
 	input I_AHBIF_HREADY,	//from slave
 	input I_AHBIF_HRESET_N,	
@@ -47,7 +46,7 @@ parameter 	P_B8 = 3'b000,
 		P_B32 = 3'b010;
 
 parameter	P_IDLE = 2'b00,
-		P_BUSY = 2'b01,
+//		P_BUSY = 2'b01,
 		P_NSEQ = 2'b10,
 		P_SEQ = 2'b11;
 
@@ -92,43 +91,26 @@ always @(*)
 					next_state = p_s_busreq;
 			p_s_nseq:
 				if (I_AHBIF_HREADY)
-					if (!I_AHBIF_BUSY)
-						if (LAST)
-							next_state = p_s_finish;
-						else 
-							if (LIMIT)
-								next_state = p_s_nseq;
-							else 
-								next_state = p_s_seq;
-					else 
-						next_state = p_s_busy;
+                                        if (LAST)
+                                                next_state = p_s_finish;
+                                        else 
+                                                if (LIMIT)
+                                                        next_state = p_s_nseq;
+                                                else 
+                                                        next_state = p_s_seq;
 				else 
 					next_state = p_s_nseq;
 			p_s_seq:
 				if (I_AHBIF_HREADY)
-					if (!I_AHBIF_BUSY)
-						if (LAST)
-							next_state = p_s_finish;
-						else 
-							if (LIMIT)
-								next_state = p_s_nseq;
-							else 
-								next_state = p_s_seq;
-					else 
-						next_state = p_s_busy;
+                                        if (LAST)
+                                                next_state = p_s_finish;
+                                        else 
+                                                if (LIMIT)
+                                                        next_state = p_s_nseq;
+                                                else 
+                                                        next_state = p_s_seq;
 				else 
 					next_state = p_s_seq;
-			p_s_busy:
-				if (I_AHBIF_HREADY)
-					if (I_AHBIF_BUSY)
-						next_state = p_s_busy;
-					else
-						if (LIMIT)
-							next_state = p_s_nseq;
-						else
-							next_state = p_s_seq;
-				else 
-					next_state = p_s_busy;
 			p_s_finish:
 				if (I_AHBIF_HREADY)
 					if (I_AHBIF_START)
@@ -249,8 +231,6 @@ always @(posedge I_AHBIF_HCLK)
 				transfer_type <= P_NSEQ;
 			p_s_seq:
 				transfer_type <= P_SEQ;
-			p_s_busy:
-				transfer_type <= P_BUSY;
 			default:
 				transfer_type <= P_IDLE;
 		endcase

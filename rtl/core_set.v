@@ -6,13 +6,11 @@ module core_set (
     output reg [4:0] O_CS_COUNT,
     output reg [2:0] O_CS_SIZE,
     output reg O_CS_WRITE,
-    output reg O_CS_BUSY,
 
     input [15:0] I_CS_HEIGHT,
     input [15:0] I_CS_WIDTH,
     input [1:0] I_CS_DEGREES,
     input I_CS_DIRECTION,
-    input I_CS_DMA_READY,
     input I_CS_START,
     input I_CS_HRESET_N,
     input I_CS_HCLK
@@ -44,14 +42,14 @@ reg [11:0] wdiv_count; //count to WDIV
 //addresses
 reg [17:0] row; 	//read row
 reg [17:0] col; 	//read column
-reg [17:0] row0; 	//read row
-reg [17:0] col0; 	//read column
-reg [17:0] row90; 	//read row
-reg [17:0] col90; 	//read column
-reg [17:0] row180; 	//read row
-reg [17:0] col180; 	//read column
-reg [17:0] row270; 	//read row
-reg [17:0] col270; 	//read column
+reg [17:0] row0; 	
+reg [17:0] col0;	
+reg [17:0] row90;
+reg [17:0] col90; 	
+reg [17:0] row180; 	
+reg [17:0] col180; 	
+reg [17:0] row270; 	
+reg [17:0] col270; 	
 
 //address decrement or increment
 reg [23:0] dec90; 	//decrement 
@@ -266,10 +264,7 @@ always @(posedge I_CS_HCLK)
 	if (curr_state == P_IDLE)
 	    set_count <= 6'h00;
 	else 
-	    if (I_CS_DMA_READY)
-		set_count <= set_count + 1;
-	    else 
-		set_count <= set_count;
+	    set_count <= set_count + 1;
 
 //count to 8
 always @(posedge I_CS_HCLK)
@@ -279,10 +274,7 @@ always @(posedge I_CS_HCLK)
 	if (curr_state == P_IDLE)
 	    burst_count <= 3'h0;
 	else
-	    if (I_CS_DMA_READY)
-		burst_count <= burst_count + 1;
-	    else 
-		burst_count <= burst_count;
+	    burst_count <= burst_count + 1;
 
 //count to HDIV
 always @(posedge I_CS_HCLK)
