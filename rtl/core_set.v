@@ -171,6 +171,8 @@ always @(posedge I_CS_HCLK)
 		    FIRST <= FIRST;
 	    P_WRITE:
 		FIRST <= 0;
+            default:
+                FIRST <= 0;
 	endcase
 
 always @(posedge I_CS_HCLK)

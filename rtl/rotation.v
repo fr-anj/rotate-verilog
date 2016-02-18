@@ -79,7 +79,7 @@ wire WRITE;
     .I_APBIF_PSEL(I_REG_PSEL), //module input 
     .I_APBIF_PENABLE(I_REG_PENABLE), //module input 
     .I_APBIF_PWRITE(I_REG_PWRITE), // module input 
-    .I_APBIF_PRESET_N(HARD_RESET), //module input HARD RESET
+    .I_APBIF_PRESET_N(I_PRESET_N), //module input HARD RESET
     .I_APBIF_PCLK(I_PCLK) // module input PCLK
     );
 
@@ -103,7 +103,7 @@ wire WRITE;
     .I_CP_DEGREES(IMG_MODE), //from REGF
     .I_CP_DIRECTION(IMG_DIR), //from REGF
     .I_CP_START(START), //from REGF
-    .I_CP_HRESET_N(HARD_RESET), //module input HARD RESET
+    .I_CP_HRESET_N(I_HRESET_N), //module input HARD RESET
     .I_CP_RESET(RESET),
     .I_CP_HCLK(I_HCLK) //module input HCLK
     );
@@ -120,7 +120,7 @@ wire WRITE;
     .I_CS_DEGREES(IMG_MODE), //from REGF
     .I_CS_DIRECTION(IMG_DIR), //from REGF
     .I_CS_START(START), //from REGF
-    .I_CS_HRESET_N(HARD_RESET), //module input HARD RESET
+    .I_CS_HRESET_N(I_HRESET_N), //module input HARD RESET
     .I_CS_RESET(RESET),
     .I_CS_HCLK(I_HCLK) //module input HCLK
     );
@@ -155,7 +155,7 @@ wire WRITE;
     .I_DMA_START(START), //from REGF
     .I_DMA_HGRANT(I_DMA_HGRANT), //module input 
     .I_DMA_HREADY(I_DMA_HREADY), //module input 
-    .I_DMA_HRESET_N(HARD_RESET), //module input HARD RESET
+    .I_DMA_HRESET_N(I_HRESET_N), //module input HARD RESET
     .I_DMA_RESET(RESET), //from REGF SOFT RESET
     .I_DMA_HCLK (I_HCLK )// module input HCLK
     );

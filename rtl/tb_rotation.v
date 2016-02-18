@@ -46,62 +46,91 @@ module tb_rotation ();
     .I_HCLK(I_HCLK)
     );
 
-    always 
-        #10 I_HCLK <= ~I_HCLK;
+parameter   p_source = 0, p_destination = 4,
+            p_height = 8, p_width = 12,
+            p_mode = 24, p_direction = 28,
+            p_start = 32, p_reset = 36,
+            p_intr_clear = 52;
 
-    always @(posedge I_HCLK)
-        I_PCLK <= ~I_PCLK;
+always 
+    #1 I_HCLK = ~I_HCLK;
+always @(posedge I_HCLK)
+    I_PCLK = ~I_PCLK;
 
-    initial begin 
-        I_REG_PADDR = 0;
-        I_REG_PWDATA = 0;
-        I_DMA_HRDATA = 0;
-        I_REG_PSEL = 0;
-        I_REG_PENABLE = 0;
-        I_REG_PWRITE = 0;
-        I_DMA_HGRANT = 0;
-        I_DMA_HREADY = 0;
-        I_PRESET_N = 1;
-        I_HRESET_N = 1;
-        I_PCLK = 0;
-        I_HCLK = 0;
-    end
+task initialize;
+    I_REG_PADDR <= 0;
+    I_REG_PWDATA <= 0;
+    I_DMA_HRDATA <= 0;
+    I_REG_PSEL <= 0;
+    I_REG_PENABLE <= 0;
+    I_REG_PWRITE <= 0;
+    I_DMA_HGRANT <= 0;
+    I_DMA_HREADY <= 0;
+    I_PRESET_N <= 1;
+    I_HRESET_N <= 1;
+    I_PCLK <= 0;
+    I_HCLK <= 0;
+endtask
 
-    initial begin
-        $vcdpluson;
+task hard_reset ();
+    //this should start at the same time.. 
+    fork //deassert
+        @(posedge I_HCLK) I_HRESET_N <= 0;
+        @(posedge I_PCLK) I_PRESET_N <= 0;
+    join 
 
-        //functional specifications Verification 
-        //soft reset no transaction
+    fork //reassert
+        @(posedge I_HCLK) I_HRESET_N <= 1;
+        @(posedge I_PCLK) I_PRESET_N <= 1;
+    join
+endtask
 
-        //set up image
+task apb_ready ();
+    @(posedge I_PCLK)
+        I_REG_PSEL <= 1;
+    @(posedge I_PCLK)
+        I_REG_PENABLE <= 1;
+endtask
 
-        //perform reset
-        @(posedge I_HCLK)
-            begin 
-                I_HRESET_N <= 0;
-                I_PRESET_N <= 0;
-            end
+task write_apb (address, value);
+    @(posedge I_PCLK)
+        I_REG_PWRITE <= 1;
+        I_REG_PADDR <= address;
+        I_REG_PWDATA <= value;
+endtask
 
-        @(posedge I_HCLK)
-            begin
-                I_HRESET_N <= 1;
-                I_PRESET_N <= 1;
-            end
+task soft_reset (address);
+    write_apb (p_reset, 1);
+endtask
 
-        //soft reset ongoing transaction
-        @(posedge I_HCLK)
-            begin 
-                I_HRESET_N <= 0;
-                I_PRESET_N <= 0;
-            end
+task read_apb (address);
+    @(posedge I_PCLK)
+        I_REG_PWRITE <= 0;
+        I_REG_PADDR <= address;
+endtask
 
-        @(posedge I_HCLK)
-            begin
-                I_HRESET_N <= 1;
-                I_PRESET_N <= 1;
-            end
+task send_to_ahb (data);
+    @(posedge I_HCLK)
+        I_DMA_HREADY <= 1;
+        I_DMA_HRDATA <= data;
+endtask
 
-        #30000 $finish;
-    end
+task grant_ahb ();
+    @(posedge I_HCLK)
+        I_DMA_HGRANT <= 1;
+endtask
+
+initial begin
+    $vcdpluson;
+    //initialize all inputs
+    initialize();
+
+    hard_reset();
+    apb_ready();
+
+    write_apb(p_height, 8);
+    write_apb(p_width, 0);
+    #2000 $finish;
+end
 
 endmodule
