@@ -290,6 +290,8 @@ always @(posedge I_CS_HCLK)
 			hdiv_count <= hdiv_count;
 	    P_WRITE:
 		hdiv_count <= hdiv_count;
+            default: 
+                hdiv_count <= 12'h000;
 	endcase
 
 //count to WDIV
@@ -313,6 +315,8 @@ always @(posedge I_CS_HCLK)
 			wdiv_count <= wdiv_count;
 	    P_WRITE:
 		wdiv_count <= wdiv_count;
+            default:
+                wdiv_count <= 12'h000;
 	endcase 
 		
 //*****************************************************//
@@ -337,6 +341,8 @@ always @(posedge I_CS_HCLK)
 			    row <= row;
 	    P_WRITE:
 		row <= row;
+            default: 
+                row <= 16'h0000;
 	endcase
 
 //current read column 
@@ -360,6 +366,8 @@ always @(posedge I_CS_HCLK)
 			col <= col;
 	    P_WRITE:
 		col <= col;
+            default:
+                col <= 16'h0000;
 	endcase
 
 //*****************************************************//
@@ -384,6 +392,8 @@ always @(posedge I_CS_HCLK)
 			row0 <= row0 + WIDTH;
 		    else 
 			row0 <= row0;
+            default:
+                row0 <= 16'h0000;
 	endcase
 
 //current read column 
@@ -407,6 +417,8 @@ always @(posedge I_CS_HCLK)
 			col0 <= col0;
 	    P_WRITE:
 		col0 <= col0;
+            default:
+                col0 <= 16'h0000;
 	endcase
 
 //*****************************************************//
@@ -434,6 +446,8 @@ always @(posedge I_CS_HCLK)
 			dec90 <= dec90;
 	    P_WRITE:
 		dec90 <= dec90;
+            default:
+                dec90 <= 16'h0000;
 	endcase
 
 always @(posedge I_CS_HCLK)
@@ -453,6 +467,8 @@ always @(posedge I_CS_HCLK)
 			row90 <= row90 + HEIGHT;
 		    else 
 			row90 <= row90;
+            default:
+                row90 <= 16'h0000;
 	endcase
 
 always @(posedge I_CS_HCLK)
@@ -472,6 +488,8 @@ always @(posedge I_CS_HCLK)
 			col90 <= col90 + 24;
 		    else 
 			col90 <= col90;
+            default:
+                col90 <= 16'h0000;
 	endcase
 
 //*****************************************************//
@@ -496,6 +514,8 @@ always @(posedge I_CS_HCLK)
 			dec180 <= dec180;
 	    P_WRITE:
 		dec180 <= dec180;
+            default:
+                dec180 <= 16'h0000;
 	endcase
 
 always @(posedge I_CS_HCLK)
@@ -515,6 +535,8 @@ always @(posedge I_CS_HCLK)
 			row180 <= row180 + WIDTH;
 		    else 
 			row180 <= row180;
+            default:
+                row180 <= 16'h0000;
 	endcase
 
 always @(posedge I_CS_HCLK)
@@ -531,6 +553,8 @@ always @(posedge I_CS_HCLK)
 		    col180 <= col180 - 24;
 		else 
 		    col180 <= col180;
+            default:
+                col180 <= 16'h0000;
 	endcase
 
 //*****************************************************//
@@ -556,6 +580,8 @@ always @(posedge I_CS_HCLK)
 			inc270 <= inc270;
 	    P_WRITE:
 		inc270 <= inc270;
+            default:
+                inc270 <= 16'h0000;
 	endcase
 
 always @(posedge I_CS_HCLK)
@@ -575,6 +601,8 @@ always @(posedge I_CS_HCLK)
 			row270 <= row270 + HEIGHT;
 		    else 
 			row270 <= row270;
+            default:
+                row270 <= 16'h0000;
 	endcase
 
 always @(posedge I_CS_HCLK)
@@ -594,6 +622,8 @@ always @(posedge I_CS_HCLK)
 			col270 <= col270 - 5'h18;
 		    else 
 			col270 <= col270;
+            default:
+                col270 <= 16'h0000;
 	endcase
 
 //*****************************************************//

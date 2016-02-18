@@ -159,8 +159,15 @@ always @(posedge I_CP_HCLK)
                             O_CP_PIXEL_IN_ADDR2 <= O_CP_PIXEL_IN_ADDR2;
                             O_CP_PIXEL_IN_ADDR3 <= O_CP_PIXEL_IN_ADDR3;
                         end
-	endcase
-
+            default:
+                begin
+                    O_CP_PIXEL_IN_ADDR0 <= 8'h00;
+                    O_CP_PIXEL_IN_ADDR1 <= 8'h00;
+                    O_CP_PIXEL_IN_ADDR2 <= 8'h00;
+                    O_CP_PIXEL_IN_ADDR3 <= 8'h00;
+                end
+        endcase
+                
 //data from input buffer to output buffer - input buffer side
 always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
@@ -190,6 +197,12 @@ always @(posedge I_CP_HCLK)
                         O_CP_PIXEL_OUT_ADDRG <= O_CP_PIXEL_OUT_ADDRG + 3;
                         O_CP_PIXEL_OUT_ADDRB <= O_CP_PIXEL_OUT_ADDRB + 3;
                     end
+            default:
+                begin
+                    O_CP_PIXEL_OUT_ADDRR <= 8'h00;
+                    O_CP_PIXEL_OUT_ADDRG <= 8'h00;
+                    O_CP_PIXEL_OUT_ADDRB <= 8'h00;
+                end
 	endcase
 
 //initialization for rotated address
@@ -318,6 +331,12 @@ always @(posedge I_CP_HCLK)
 			base_g <= base_g;
 			base_b <= base_b;
 		    end
+            default:
+                begin 
+                    base_r <= 8'h00;
+                    base_g <= 8'h00;
+                    base_b <= 8'h00;
+                end
 	endcase
 
 //data from input buffer to the output buffer (output buffer side)
@@ -397,6 +416,12 @@ always @(posedge I_CP_HCLK)
 			addr_g <= addr_g;
 			addr_b <= addr_b;
 		    end
+            default:
+                begin
+                    addr_r <= 8'h00;
+                    addr_g <= 8'h00;
+                    addr_b <= 8'h00;
+                end
 	endcase
 
 always @(posedge I_CP_HCLK)
@@ -453,6 +478,13 @@ always @(posedge I_CP_HCLK)
                             O_CP_PIXEL_OUT_ADDR2 <= O_CP_PIXEL_OUT_ADDR2;
                             O_CP_PIXEL_OUT_ADDR3 <= O_CP_PIXEL_OUT_ADDR3;
                         end
+            default:
+                begin
+                    O_CP_PIXEL_OUT_ADDR0 <= 8'h00;
+                    O_CP_PIXEL_OUT_ADDR1 <= 8'h00;
+                    O_CP_PIXEL_OUT_ADDR2 <= 8'h00;
+                    O_CP_PIXEL_OUT_ADDR3 <= 8'h00;
+                end
 	endcase
 
 endmodule
