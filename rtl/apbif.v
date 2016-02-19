@@ -83,14 +83,6 @@ always @(posedge I_APBIF_PCLK)
 			REGISTER_FILE[address2]	<= I_APBIF_PWDATA[15:8];
 			REGISTER_FILE[address3]	<= I_APBIF_PWDATA[23:16];
 			REGISTER_FILE[address4]	<= I_APBIF_PWDATA[31:24];
-                        //########################################################
-                        //#################SELF-CLEARING##########################
-                        if (O_APBIF_CTRL_START)
-                            REGISTER_FILE[32'h00000020][0] <= 0;
-                        else
-                            REGISTER_FILE[32'h00000020][0] <= REGISTER_FILE[32'h00000020][0];
-                        //########################################################
-                        //########################################################
                     end
 	    endcase
 	else

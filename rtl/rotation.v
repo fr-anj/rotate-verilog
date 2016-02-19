@@ -6,7 +6,7 @@ module rotation (
     output [31:0] O_DMA_HWDATA,
     output [1:0] O_DMA_HTRANS,
     output [2:0] O_DMA_HSIZE,
-    output [3:0] O_DMA_HBURST,
+    output [2:0] O_DMA_HBURST,
     output O_DMA_HBUSREQ,
     output O_DMA_HWRITE,
     output O_INTR_DONE,
@@ -102,7 +102,7 @@ wire WRITE;
     .I_CP_WIDTH(IMG_W), //from REGF
     .I_CP_DEGREES(IMG_MODE), //from REGF
     .I_CP_DIRECTION(IMG_DIR), //from REGF
-    .I_CP_START(START), //from REGF
+    .I_CP_START(START), //from REGF TODO: rename to DMA_READY
     .I_CP_HRESET_N(I_HRESET_N), //module input HARD RESET
     .I_CP_RESET(RESET),
     .I_CP_HCLK(I_HCLK) //module input HCLK
@@ -119,13 +119,13 @@ wire WRITE;
     .I_CS_WIDTH(IMG_W), //from REGF
     .I_CS_DEGREES(IMG_MODE), //from REGF
     .I_CS_DIRECTION(IMG_DIR), //from REGF
-    .I_CS_START(START), //from REGF
+    .I_CS_START(START), //from REGF TODO: rename to DMA_READY
     .I_CS_HRESET_N(I_HRESET_N), //module input HARD RESET
     .I_CS_RESET(RESET),
     .I_CS_HCLK(I_HCLK) //module input HCLK
     );
 
-    dma DMA (
+    dma DMA ( //TODO: output DMA_READY after HGRANT
     .O_DMA_HADDR(O_DMA_HADDR), //module output
     .O_DMA_HWDATA(O_DMA_HWDATA), //module output
     .O_DMA_HTRANS(O_DMA_HTRANS), //module output

@@ -2,9 +2,9 @@
 
 module core_set (
     output reg [31:0] O_CS_ADDR,
-    output reg [4:0] O_CS_COUNT,
-    output reg [2:0] O_CS_SIZE,
     output reg O_CS_WRITE,
+    output [4:0] O_CS_COUNT,
+    output [2:0] O_CS_SIZE,
     output [15:0] O_CS_NEW_H, 
     output [15:0] O_CS_NEW_W, 
 
@@ -88,7 +88,6 @@ wire [23:0] ROWDEC_90;
 wire [23:0] START_180;
 wire [23:0] ROWDEC_180;
 wire [23:0] COL_180;
-wire [15:0] COLDEC_180;
 wire [23:0] ROWINC_270;
 wire [23:0] COL_270;
 
@@ -128,8 +127,8 @@ assign COL_180 = (WDIV << 4) + (WDIV << 3); //WDIV * 24
 
 assign HDIVMIN = HDIV - 1;
 assign WDIVMIN = WDIV - 1;
-assign COL_270 = (HDIVMIN << 4) + (WDIV << 3); //HDIVMIN * 24
-assign ROWINC_270 = ROWDEC_90;
+assign COL_270 = (WDIV == 1)? 0 : (HDIVMIN << 4) + (WDIV << 3); //HDIVMIN * 24
+assign ROWINC_270 = ROWDEC_90; 
 
 assign STOP_ROT = (I_CS_HEIGHT[15] || (I_CS_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
@@ -142,20 +141,17 @@ assign out_address90 = row90 + col90;
 assign out_address180 = row180 + col180;
 assign out_address270 = row270 + col270;
 
-assign O_CS_NEW_H = N_HEIGHT;
-assign O_CS_NEW_W = N_WIDTH;
+assign O_CS_NEW_H = new_height;
+assign O_CS_NEW_W = new_width;
 
-always @(*)
-    O_CS_SIZE = 3'h2; //32 bit
+assign O_CS_SIZE = 3'h2;
+assign O_CS_COUNT = 5'h06;
 
 always @(*)
     if (curr_state == P_WRITE)
         O_CS_WRITE = 1;
     else 
         O_CS_WRITE = 0;
-
-always @(*)
-    O_CS_COUNT = 5'h06; //6 bursts INCR
 
 always @(posedge I_CS_HCLK)
     if (!I_CS_HRESET_N)

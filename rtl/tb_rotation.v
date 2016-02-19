@@ -4,7 +4,7 @@ module tb_rotation ();
     wire [31:0] O_DMA_HWDATA;
     wire [1:0] O_DMA_HTRANS;
     wire [2:0] O_DMA_HSIZE;
-    wire [3:0] O_DMA_HBURST;
+    wire [2:0] O_DMA_HBURST;
     wire O_DMA_HBUSREQ;
     wire O_DMA_HWRITE;
     wire O_INTR_DONE;
@@ -46,11 +46,16 @@ module tb_rotation ();
     .I_HCLK(I_HCLK)
     );
 
-parameter   p_source = 0, p_destination = 4,
-            p_height = 8, p_width = 12,
-            p_mode = 24, p_direction = 28,
-            p_start = 32, p_reset = 36,
-            p_intr_clear = 52;
+parameter   p_source = 8'h00, p_destination = 8'h04,
+            p_height = 8'h08, p_width = 8'h0c,
+            p_new_height = 8'h10, p_new_width = 8'h14,
+            p_mode = 8'h18, p_direction = 8'h1c,
+            p_start = 8'h20, p_reset = 8'h24,
+            p_intr_mask = 8'h28, p_bef_mask = 8'h2c,
+            p_aft_mask = 8'h30, p_intr_clear = 52;
+
+parameter   p_deg_0 = 0, p_deg_90 = 1, p_deg_180 = 2, p_deg_270 = 3;
+parameter   p_ccw = 0, p_cw = 1;
 
 always 
     #1 I_HCLK = ~I_HCLK;
@@ -85,52 +90,71 @@ task hard_reset ();
     join
 endtask
 
-task apb_ready ();
+task write_apb (input bit [31:0] address, input bit [31:0] value);
     @(posedge I_PCLK)
         I_REG_PSEL <= 1;
-    @(posedge I_PCLK)
         I_REG_PENABLE <= 1;
-endtask
-
-task write_apb (address, value);
-    @(posedge I_PCLK)
         I_REG_PWRITE <= 1;
         I_REG_PADDR <= address;
         I_REG_PWDATA <= value;
+
+    @(posedge I_PCLK)
+        I_REG_PENABLE <= 0;
 endtask
 
-task soft_reset (address);
+task soft_reset (input bit address);
     write_apb (p_reset, 1);
 endtask
 
-task read_apb (address);
+task read_apb (input bit [31:0] address);
     @(posedge I_PCLK)
+        I_REG_PSEL <= 1;
+        I_REG_PENABLE <= 1;
         I_REG_PWRITE <= 0;
         I_REG_PADDR <= address;
 endtask
 
-task send_to_ahb (data);
+task send_to_ahb (input bit [31:0] data);
     @(posedge I_HCLK)
         I_DMA_HREADY <= 1;
         I_DMA_HRDATA <= data;
 endtask
 
-task grant_ahb ();
-    @(posedge I_HCLK)
-        I_DMA_HGRANT <= 1;
+task grant_ahb (input bit value, integer delay);
+    repeat (delay) @(posedge I_HCLK);
+        I_DMA_HGRANT <= value;
 endtask
 
+task set_image_properties (input bit [31:0] height, input bit [31:0] width, input bit [31:0] degrees, input bit [31:0] direction);
+    write_apb(p_height, height);
+    write_apb(p_width, width);
+    write_apb(p_direction, direction);
+    write_apb(p_mode, degrees);
+endtask
+
+function integer delay (integer new_height, integer new_width);
+    integer write_delay;
+
+    write_delay = new_height + new_width;
+
+    delay = write_delay * 2;
+endfunction
+
 initial begin
+    $vcdplusmemon;
     $vcdpluson;
     //initialize all inputs
     initialize();
 
     hard_reset();
-    apb_ready();
 
-    write_apb(p_height, 8);
-    write_apb(p_width, 0);
-    #2000 $finish;
+    //scenario 1000
+    set_image_properties(.height(1), .width(1), .degrees(p_deg_0), .direction(p_cw));
+    write_apb(p_start, 1);
+    read_apb(p_start);
+    if (O_DMA_HBUSREQ) @(posedge I_HCLK) grant_ahb(1, 1);
+
+    #20000 $finish;
 end
 
 endmodule
