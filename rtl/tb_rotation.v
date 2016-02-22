@@ -112,6 +112,9 @@ task read_apb (input bit [31:0] address);
         I_REG_PENABLE <= 1;
         I_REG_PWRITE <= 0;
         I_REG_PADDR <= address;
+
+    @(posedge I_PCLK)
+        I_REG_PENABLE <= 0;
 endtask
 
 task send_to_ahb (input bit [31:0] data);
@@ -139,6 +142,10 @@ function integer delay (integer new_height, integer new_width);
 
     delay = write_delay * 2;
 endfunction
+
+task read_image (string filename);
+
+endtask
 
 initial begin
     $vcdplusmemon;

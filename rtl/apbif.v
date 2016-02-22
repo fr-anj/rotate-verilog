@@ -27,10 +27,15 @@ integer i,j;
 
 reg [7:0] REGISTER_FILE [59:0];
 
+reg curr_state;
+reg next_state;
+
 wire [5:0] address1;
 wire [5:0] address2;
 wire [5:0] address3;
 wire [5:0] address4;
+
+parameter P_IDLE = 2'h0, P_SETUP = 2'h1, P_ACCESS = 2'h2;
 
 parameter ROT_IMG_NEW_H	= 6'h10,
           ROT_IMG_NEW_W	= 6'h14,
@@ -44,6 +49,34 @@ assign address1 = {I_APBIF_PADDR[5:2],2'h0};
 assign address2 = address1 + 6'h01;
 assign address3 = address1 + 6'h02;
 assign address4 = address1 + 6'h03;
+
+always @(posedge I_APBIF_PCLK)
+    if (I_APBIF_PRESET_N)
+        curr_state <= P_IDLE;
+    else 
+        curr_state <= next_state;
+
+always @(posedge I_APBIF_PCLK)
+    if (!I_APBIF_PRESET_N)
+        next_state = P_IDLE;
+    else 
+        case (curr_state)
+            P_IDLE:
+                if (I_APBIF_PSEL) 
+                    next_state = P_SETUP;
+                else 
+                    next_state = P_IDLE;
+            P_SETUP:
+                if (I_APBIF_PENABLE)
+                    next_state = P_ACCESS;
+                else 
+                    next_state = P_SETUP;
+            P_ACCESS:
+                if (I_APBIF_PSEL)
+                    next_state = P_SETUP;
+                else 
+                    next_state = P_IDLE;
+        endcase
 
 //request master to extend read state
 always @(posedge I_APBIF_PCLK)
@@ -61,33 +94,33 @@ always @(posedge I_APBIF_PCLK)
 	for (i = 0; i < 60; i = i + 1)
 	    REGISTER_FILE[i] <= 8'h00;
     else 
-	if (I_APBIF_PSEL && I_APBIF_PENABLE && I_APBIF_PWRITE)
-	    case (address1)
-		//########################################################
-		//######################READ-ONLY#########################
-		ROT_IMG_NEW_H:
-		    begin
-			REGISTER_FILE[address1] <= I_APBIF_ROT_IMG_NEW_H[7:0];
-			REGISTER_FILE[address2] <= I_APBIF_ROT_IMG_NEW_H[15:8];
-		    end
-		ROT_IMG_NEW_W:
-		    begin
-			REGISTER_FILE[address1] <= I_APBIF_ROT_IMG_NEW_W[7:0];
-			REGISTER_FILE[address2] <= I_APBIF_ROT_IMG_NEW_W[15:8];
-		    end
-		//########################################################
-		//########################################################
-		default:
-		    begin
-			REGISTER_FILE[address1]	<= I_APBIF_PWDATA[7:0];
-			REGISTER_FILE[address2]	<= I_APBIF_PWDATA[15:8];
-			REGISTER_FILE[address3]	<= I_APBIF_PWDATA[23:16];
-			REGISTER_FILE[address4]	<= I_APBIF_PWDATA[31:24];
+        if (I_APBIF_PSEL && I_APBIF_PENABLE && I_APBIF_PWRITE && (next_state == P_IDLE))
+            case (address1)
+                //########################################################
+                //######################READ-ONLY#########################
+                ROT_IMG_NEW_H:
+                    begin
+                        REGISTER_FILE[address1] <= I_APBIF_ROT_IMG_NEW_H[7:0];
+                        REGISTER_FILE[address2] <= I_APBIF_ROT_IMG_NEW_H[15:8];
                     end
-	    endcase
-	else
-	   for (j = 0; j < 60; j = j + 1)
-	       REGISTER_FILE[j] <= REGISTER_FILE[j];
+                ROT_IMG_NEW_W:
+                    begin
+                        REGISTER_FILE[address1] <= I_APBIF_ROT_IMG_NEW_W[7:0];
+                        REGISTER_FILE[address2] <= I_APBIF_ROT_IMG_NEW_W[15:8];
+                    end
+                //########################################################
+                //########################################################
+                default:
+                    begin
+                        REGISTER_FILE[address1]	<= I_APBIF_PWDATA[7:0];
+                        REGISTER_FILE[address2]	<= I_APBIF_PWDATA[15:8];
+                        REGISTER_FILE[address3]	<= I_APBIF_PWDATA[23:16];
+                        REGISTER_FILE[address4]	<= I_APBIF_PWDATA[31:24];
+                    end
+            endcase
+        else
+           for (j = 0; j < 60; j = j + 1)
+               REGISTER_FILE[j] <= REGISTER_FILE[j];
     
 // to CPU
 always @(posedge I_APBIF_PCLK)

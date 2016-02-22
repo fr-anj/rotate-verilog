@@ -52,7 +52,7 @@ always @(posedge I_OMEM_HCLK)
 
 always @(posedge I_OMEM_HCLK)
     if (!I_OMEM_HRESET_N)
-	output1 <= 8'h00;
+	output1 <= 8'h01;
     else 
 	if (I_OMEM_PIXEL_OUT_ADDR1 == I_OMEM_PIXEL_IN_ADDRB)
 	    output1 <= I_OMEM_PIXEL_B;
@@ -65,7 +65,7 @@ always @(posedge I_OMEM_HCLK)
 
 always @(posedge I_OMEM_HCLK)
     if (!I_OMEM_HRESET_N)
-	output2 <= 8'h00;
+	output2 <= 8'h02;
     else 
 	if (I_OMEM_PIXEL_OUT_ADDR2 == I_OMEM_PIXEL_IN_ADDRB)
 	    output2 <= I_OMEM_PIXEL_B;
@@ -78,7 +78,7 @@ always @(posedge I_OMEM_HCLK)
 
 always @(posedge I_OMEM_HCLK)
     if (!I_OMEM_HRESET_N)
-	output3 <= 8'h00;
+	output3 <= 8'h03;
     else 
 	if (I_OMEM_PIXEL_OUT_ADDR3 == I_OMEM_PIXEL_IN_ADDRB)
 	    output3 <= I_OMEM_PIXEL_B;

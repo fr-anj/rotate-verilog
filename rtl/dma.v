@@ -8,6 +8,7 @@ module dma (
     output [2:0] O_DMA_HBURST,
     output O_DMA_HBUSREQ,
     output O_DMA_HWRITE,
+    output O_DMA_READY,
     
     input [31:0] I_DMA_ADDR,
     input [31:0] I_DMA_HRDATA,
@@ -44,6 +45,7 @@ wire [31:0] DATA_WRITE_TO_AHB;
 wire HARD_RESET;
 
 assign HARD_RESET = !I_DMA_HRESET_N || I_DMA_RESET;
+assign O_DMA_READY = I_DMA_HGRANT;
 
     ahbif AHB (
     .O_AHBIF_HBUSREQ(O_DMA_HBUSREQ),
@@ -63,7 +65,8 @@ assign HARD_RESET = !I_DMA_HRESET_N || I_DMA_RESET;
     .I_AHBIF_WRITE(I_DMA_WRITE),  
     .I_AHBIF_HGRANT(I_DMA_HGRANT),   
     .I_AHBIF_HREADY(I_DMA_HREADY),   
-    .I_AHBIF_HRESET_N(I_DMA_HRESET_N),	
+    .I_AHBIF_RESET(I_DMA_HRESET_N),	
+    .I_AHBIF_HRESET_N(I_DMA_RESET),	
     .I_AHBIF_HCLK(I_DMA_HCLK)
     );		
 

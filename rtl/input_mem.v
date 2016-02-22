@@ -20,11 +20,11 @@ module input_mem (
 
 integer i;
 
-reg [7:0] memory [63:0];
+reg [7:0] memory [191:0];
 
 always @(posedge I_IMEM_HCLK)
     if (!I_IMEM_HRESET_N)
-	for (i = 0; i < 64; i = i + 1)
+	for (i = 0; i < 192; i = i + 1)
 	    memory[i] <= 8'h00;
     else 
 	begin 

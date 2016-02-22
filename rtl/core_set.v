@@ -12,6 +12,7 @@ module core_set (
     input [15:0] I_CS_HEIGHT,
     input [15:0] I_CS_WIDTH,
     input [1:0] I_CS_DEGREES,
+    input I_CS_DMA_READY, //from dma - start transaction signal
     input I_CS_DIRECTION,
     input I_CS_START,
     input I_CS_HRESET_N,
@@ -206,7 +207,7 @@ always @(*)
 		if (STOP_ROT)
 		    next_state = P_IDLE;
 		else 
-		    if (I_CS_START)
+		    if (I_CS_DMA_READY)
 			next_state = P_READ;
 		    else 
 			next_state = P_IDLE;

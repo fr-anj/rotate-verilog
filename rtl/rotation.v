@@ -41,6 +41,9 @@ wire BEF_MASK;
 wire AFT_MASK;  
 wire INTR_CLEAR;
 
+//dma to core
+wire DMA_READY;
+
 //core to dma
 wire [31:0] ADDR;
 wire [7:0] PIXEL_IN_ADDR0;
@@ -98,6 +101,7 @@ wire WRITE;
     .O_CP_PIXEL_IN_ADDRR(PIXEL_IN_ADDRR), //from core pixel
     .O_CP_PIXEL_IN_ADDRG(PIXEL_IN_ADDRG), //from core pixel
     .O_CP_PIXEL_IN_ADDRB(PIXEL_IN_ADDRB), //from core pixel
+    .I_CP_DMA_READY(DMA_READY), //from DMA
     .I_CP_HEIGHT(IMG_H), //from REGF
     .I_CP_WIDTH(IMG_W), //from REGF
     .I_CP_DEGREES(IMG_MODE), //from REGF
@@ -115,6 +119,7 @@ wire WRITE;
     .O_CS_WRITE(WRITE), //to DMA
     .O_CS_NEW_H(IMG_NEW_H), //to REGF
     .O_CS_NEW_W(IMG_NEW_W), //to REGF
+    .I_CS_DMA_READY(DMA_READY), //from DMA
     .I_CS_HEIGHT(IMG_H), //from REGF
     .I_CS_WIDTH(IMG_W), //from REGF
     .I_CS_DEGREES(IMG_MODE), //from REGF
@@ -133,6 +138,7 @@ wire WRITE;
     .O_DMA_HBURST(O_DMA_HBURST), //module output
     .O_DMA_HBUSREQ(O_DMA_HBUSREQ), //module output
     .O_DMA_HWRITE(O_DMA_HWRITE), //module output
+    .O_DMA_READY(DMA_READY), //to core
     .I_DMA_ADDR(ADDR), //from core set
     .I_DMA_HRDATA(I_DMA_HRDATA), // module input 
     .I_DMA_PIXEL_OUT_ADDRR(PIXEL_OUT_ADDRR), //from core pixel

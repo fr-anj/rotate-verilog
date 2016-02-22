@@ -20,6 +20,7 @@ module core_pixel (
     input [15:0] I_CP_HEIGHT,
     input [15:0] I_CP_WIDTH,
     input [1:0]	 I_CP_DEGREES,
+    input I_CP_DMA_READY, //from dma - start transaction signal
     input I_CP_DIRECTION,
     input I_CP_START,
     input I_CP_HRESET_N,
@@ -86,7 +87,7 @@ always @(*)
     else 
 	case(curr_state)
 	    P_IDLE: 
-		if (I_CP_START)
+		if (I_CP_DMA_READY)
 		    next_state = P_READ;
 		else 
 		    next_state = P_IDLE;
@@ -123,9 +124,9 @@ always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	begin
 	    O_CP_PIXEL_IN_ADDR0 <= 8'h00;
-	    O_CP_PIXEL_IN_ADDR1 <= 8'h00;
-	    O_CP_PIXEL_IN_ADDR2 <= 8'h00;
-	    O_CP_PIXEL_IN_ADDR3 <= 8'h00;
+	    O_CP_PIXEL_IN_ADDR1 <= 8'h01;
+	    O_CP_PIXEL_IN_ADDR2 <= 8'h02;
+	    O_CP_PIXEL_IN_ADDR3 <= 8'h03;
 	end
     else 
 	case (next_state)
@@ -173,8 +174,8 @@ always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	begin
 	    O_CP_PIXEL_OUT_ADDRR <= 8'h00;
-	    O_CP_PIXEL_OUT_ADDRG <= 8'h00;
-	    O_CP_PIXEL_OUT_ADDRB <= 8'h00;
+	    O_CP_PIXEL_OUT_ADDRG <= 8'h01;
+	    O_CP_PIXEL_OUT_ADDRB <= 8'h02;
 	end
     else 
 	case (next_state)

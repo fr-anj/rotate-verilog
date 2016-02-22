@@ -19,6 +19,7 @@ module ahbif (
 	input I_AHBIF_WRITE, //from core
 	input I_AHBIF_HGRANT, //from arbiter
 	input I_AHBIF_HREADY,	//from slave
+        input I_AHBIF_RESET, //from register file //soft_reset
 	input I_AHBIF_HRESET_N,	
 	input I_AHBIF_HCLK);		
 
@@ -79,6 +80,9 @@ always @(*)
                         else 
                                 next_state = p_s_idle;
                 p_s_busreq:
+                    if(I_AHBIF_RESET) //soft_reset
+                        next_state = p_s_idle;
+                    else 
                         if (I_AHBIF_HREADY)
                                 if (I_AHBIF_HGRANT)
                                         next_state = p_s_nseq;
@@ -109,6 +113,9 @@ always @(*)
                         else 
                                 next_state = p_s_seq;
                 p_s_finish:
+                    if (I_AHBIF_RESET)
+                        next_state = p_s_idle;
+                    else 
                         if (I_AHBIF_HREADY)
                                 if (I_AHBIF_START)
                                         next_state = p_s_busreq;
@@ -123,8 +130,6 @@ always @(*)
 //address output 
 always @(*)
     O_AHBIF_HADDR = new_addr;
-
-// assign O_AHBIF_HADDR = new_addr;
 
 //address alignment
 always @(*)
@@ -292,9 +297,9 @@ always @(posedge I_AHBIF_HCLK)
 		else 
 			transfer_count <= 4'h0;
 
-assign O_AHBIF_RDATA = I_AHBIF_HRDATA;
+assign O_AHBIF_RDATA = (I_AHBIF_RESET)? 32'h0000_0000 : I_AHBIF_HRDATA; //treat as invalid when soft reset
 assign temp = I_AHBIF_ADDR[1:0] & 2'h3;
-assign LAST 	= ({1'b0,transfer_count} < (I_AHBIF_COUNT - 1))? 0 : 1;
-assign LIMIT 	= (addr_check[11:0] == 11'h400)? 1 : 0;
-assign O_AHBIF_HWRITE 	= I_AHBIF_WRITE;
+assign LAST = ({1'b0,transfer_count} < (I_AHBIF_COUNT - 1))? 0 : 1;
+assign LIMIT = (addr_check[11:0] == 11'h400)? 1 : 0;
+assign O_AHBIF_HWRITE = I_AHBIF_WRITE;
 endmodule
