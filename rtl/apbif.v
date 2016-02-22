@@ -3,14 +3,14 @@
 module apbif (
     output reg [31:0] O_APBIF_PRDATA,
     output reg O_APBIF_PREADY,
-    output [31:0] O_APBIF_DMA_SRC_IMG,
-    output [31:0] O_APBIF_DMA_DST_IMG,
-    output [15:0] O_APBIF_ROT_IMG_H,
-    output [15:0] O_APBIF_ROT_IMG_W,
-    output [1:0] O_APBIF_ROT_IMG_MODE,
-    output O_APBIF_ROT_IMG_DIR,
-    output O_APBIF_CTRL_START,
-    output O_APBIF_CTRL_RESET,
+    output reg [31:0] O_APBIF_DMA_SRC_IMG,
+    output reg [31:0] O_APBIF_DMA_DST_IMG,
+    output reg [15:0] O_APBIF_ROT_IMG_H,
+    output reg [15:0] O_APBIF_ROT_IMG_W,
+    output reg [1:0] O_APBIF_ROT_IMG_MODE,
+    output reg O_APBIF_ROT_IMG_DIR,
+    output reg O_APBIF_CTRL_START,
+    output reg O_APBIF_CTRL_RESET,
 
     input [31:0] I_APBIF_PADDR,
     input [31:0] I_APBIF_PWDATA,
@@ -154,5 +154,59 @@ assign O_APBIF_ROT_IMG_DIR = REGISTER_FILE[6'h1c][0];
 assign O_APBIF_CTRL_START = REGISTER_FILE[6'h20][0];
 assign O_APBIF_CTRL_RESET = REGISTER_FILE[6'h24][0];
 assign O_APBIF_CTRL_INTR_MASK = REGISTER_FILE[6'h28][0];
+
+always @(posedge I_APBIF_HCLK)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_DMA_SRC_IMG <= 32'h0000_0000;
+    else 
+        O_APBIF_DMA_SRC_IMG <= {REGISTER_FILE[6'h03],REGISTER_FILE[6'h02],REGISTER_FILE[6'h01],REGISTER_FILE[6'h00]};
+
+always @(posedge)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_DMA_DST_IMG 
+    else
+        O_APBIF_DMA_DST_IMG 
+
+always @(posedge I_APBIF_HCLK)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_ROT_IMG_H
+    else
+        O_APBIF_ROT_IMG_H
+
+always @(posedge)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_ROT_IMG_W
+    else
+        O_APBIF_ROT_IMG_W
+
+always @(posedge I_APBIF_HCLK)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_ROT_IMG_MODE
+    else
+        O_APBIF_ROT_IMG_MODE
+
+always @(posedge)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_ROT_DIR
+    else
+        O_APBIF_ROT_DIR
+
+always @(posedge I_APBIF_HCLK)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_CTRL_START
+    else
+        O_APBIF_CTRL_START
+
+always @(posedge)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_CTRL_RESET
+    else
+        O_APBIF_CTRL_RESET
+
+always @(posedge)
+    if (!I_APBIF_PRESET_N)
+        O_APBIF_CTRL_INTR_MASK
+    else
+        O_APBIF_CTRL_INTR_MASK
 
 endmodule
