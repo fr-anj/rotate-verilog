@@ -143,10 +143,25 @@ function integer delay (integer new_height, integer new_width);
     delay = write_delay * 2;
 endfunction
 
+/*file handling
+//reads image by 4 bytes every clock cycle
 task read_image (string filename);
+    image = $fopen(filename, "r");
+    if (image == 0)
+        begin
+            $display("error in reading image");
+            $finish;
+        end
 
+    always @(posedge I_HCLK)
+
+    $fclose(filename);
 endtask
 
+task create_image (input bit [31:0] data, filename);
+    image = $fopen(
+endtask
+*/
 initial begin
     $vcdplusmemon;
     $vcdpluson;
