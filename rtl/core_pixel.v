@@ -237,8 +237,8 @@ always @(*)
             default:
                 begin
                     pixel_r = 8'h00;
-                    pixel_g = 8'h00;
-                    pixel_b = 8'h00;
+                    pixel_g = 8'h01;
+                    pixel_b = 8'h02;
                 end
         endcase
     else //clockwise 
@@ -270,8 +270,8 @@ always @(*)
             default:
                 begin
                     pixel_r = 8'h00;
-                    pixel_g = 8'h00;
-                    pixel_b = 8'h00;
+                    pixel_g = 8'h01;
+                    pixel_b = 8'h02;
                 end
         endcase
 
@@ -433,19 +433,26 @@ always @(posedge I_CP_HCLK)
 	    O_CP_PIXEL_IN_ADDRB <= 8'h00;
 	end
     else
-	begin
-	    O_CP_PIXEL_IN_ADDRR <= addr_r;
-	    O_CP_PIXEL_IN_ADDRG <= addr_g;
-	    O_CP_PIXEL_IN_ADDRB <= addr_b;
-	end
+        if (next_state == P_IDLE)
+            begin
+                O_CP_PIXEL_IN_ADDRR <= 8'h00;
+                O_CP_PIXEL_IN_ADDRG <= 8'h00;
+                O_CP_PIXEL_IN_ADDRB <= 8'h00;
+            end
+        else 
+            begin
+                O_CP_PIXEL_IN_ADDRR <= addr_r;
+                O_CP_PIXEL_IN_ADDRG <= addr_g;
+                O_CP_PIXEL_IN_ADDRB <= addr_b;
+            end
 
 always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	begin
 	    O_CP_PIXEL_OUT_ADDR0 <= 8'h00;
-	    O_CP_PIXEL_OUT_ADDR1 <= 8'h00;
-	    O_CP_PIXEL_OUT_ADDR2 <= 8'h00;
-	    O_CP_PIXEL_OUT_ADDR3 <= 8'h00;
+	    O_CP_PIXEL_OUT_ADDR1 <= 8'h01;
+	    O_CP_PIXEL_OUT_ADDR2 <= 8'h02;
+	    O_CP_PIXEL_OUT_ADDR3 <= 8'h03;
 	end
     else 
 	case (next_state)

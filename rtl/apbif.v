@@ -27,8 +27,8 @@ integer i,j;
 
 reg [7:0] REGISTER_FILE [59:0];
 
-reg curr_state;
-reg next_state;
+reg [1:0] curr_state;
+reg [1:0] next_state;
 
 wire [5:0] address1;
 wire [5:0] address2;
@@ -144,7 +144,7 @@ always @(posedge I_APBIF_PCLK)
 	else 
 	    O_APBIF_PRDATA <= O_APBIF_PRDATA;
 
-//to core
+/*/to core
 assign O_APBIF_DMA_SRC_IMG = {REGISTER_FILE[6'h03],REGISTER_FILE[6'h02],REGISTER_FILE[6'h01],REGISTER_FILE[6'h00]};
 assign O_APBIF_DMA_DST_IMG = {REGISTER_FILE[6'h07],REGISTER_FILE[6'h06],REGISTER_FILE[6'h05],REGISTER_FILE[6'h04]};
 assign O_APBIF_ROT_IMG_H = {REGISTER_FILE[6'h09],REGISTER_FILE[6'h08]};
@@ -154,59 +154,59 @@ assign O_APBIF_ROT_IMG_DIR = REGISTER_FILE[6'h1c][0];
 assign O_APBIF_CTRL_START = REGISTER_FILE[6'h20][0];
 assign O_APBIF_CTRL_RESET = REGISTER_FILE[6'h24][0];
 assign O_APBIF_CTRL_INTR_MASK = REGISTER_FILE[6'h28][0];
-
-always @(posedge I_APBIF_HCLK)
+*/
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
         O_APBIF_DMA_SRC_IMG <= 32'h0000_0000;
     else 
         O_APBIF_DMA_SRC_IMG <= {REGISTER_FILE[6'h03],REGISTER_FILE[6'h02],REGISTER_FILE[6'h01],REGISTER_FILE[6'h00]};
 
-always @(posedge)
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_DMA_DST_IMG 
+        O_APBIF_DMA_DST_IMG <= 32'h0000_0000;
     else
-        O_APBIF_DMA_DST_IMG 
+        O_APBIF_DMA_DST_IMG <= {REGISTER_FILE[6'h07],REGISTER_FILE[6'h06],REGISTER_FILE[6'h05],REGISTER_FILE[6'h04]};
 
-always @(posedge I_APBIF_HCLK)
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_ROT_IMG_H
+        O_APBIF_ROT_IMG_H <= 32'h0000_0000;
     else
-        O_APBIF_ROT_IMG_H
+        O_APBIF_ROT_IMG_H <= {REGISTER_FILE[6'h09],REGISTER_FILE[6'h08]};
 
-always @(posedge)
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_ROT_IMG_W
+        O_APBIF_ROT_IMG_W <= 32'h0000_0000;
     else
-        O_APBIF_ROT_IMG_W
+        O_APBIF_ROT_IMG_W <= {REGISTER_FILE[6'h0d],REGISTER_FILE[6'h0c]};
 
-always @(posedge I_APBIF_HCLK)
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_ROT_IMG_MODE
+        O_APBIF_ROT_IMG_MODE <= 32'h0000_0000;
     else
-        O_APBIF_ROT_IMG_MODE
+        O_APBIF_ROT_IMG_MODE <= REGISTER_FILE[6'h18][1:0];
 
-always @(posedge)
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_ROT_DIR
+        O_APBIF_ROT_IMG_DIR <= 32'h0000_0000;
     else
-        O_APBIF_ROT_DIR
+        O_APBIF_ROT_IMG_DIR <= REGISTER_FILE[6'h1c][0];
 
-always @(posedge I_APBIF_HCLK)
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_CTRL_START
+        O_APBIF_CTRL_START <= 32'h0000_0000;
     else
-        O_APBIF_CTRL_START
+        O_APBIF_CTRL_START <= REGISTER_FILE[6'h20][0];
 
-always @(posedge)
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_CTRL_RESET
+        O_APBIF_CTRL_RESET <= 32'h0000_0000;
     else
-        O_APBIF_CTRL_RESET
-
-always @(posedge)
+        O_APBIF_CTRL_RESET <= REGISTER_FILE[6'h24][0];
+/*
+always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
-        O_APBIF_CTRL_INTR_MASK
+        O_APBIF_CTRL_INTR_MASK <= 32'h0000_0000;
     else
-        O_APBIF_CTRL_INTR_MASK
-
+        O_APBIF_CTRL_INTR_MASK <= REGISTER_FILE[6'h28][0];
+*/
 endmodule
