@@ -93,13 +93,13 @@ endtask
 task write_apb (input bit [31:0] address, input bit [31:0] value);
     @(posedge I_PCLK)
         I_REG_PSEL <= 1;
-        I_REG_PENABLE <= 1;
+        I_REG_PENABLE <= 0;
         I_REG_PWRITE <= 1;
         I_REG_PADDR <= address;
         I_REG_PWDATA <= value;
 
     @(posedge I_PCLK)
-        I_REG_PENABLE <= 0;
+        I_REG_PENABLE <= 1;
 endtask
 
 task soft_reset (input bit address);
@@ -109,12 +109,12 @@ endtask
 task read_apb (input bit [31:0] address);
     @(posedge I_PCLK)
         I_REG_PSEL <= 1;
-        I_REG_PENABLE <= 1;
+        I_REG_PENABLE <= 0;
         I_REG_PWRITE <= 0;
         I_REG_PADDR <= address;
 
     @(posedge I_PCLK)
-        I_REG_PENABLE <= 0;
+        I_REG_PENABLE <= 1;
 endtask
 
 task send_to_ahb (input bit [31:0] data);
@@ -126,6 +126,11 @@ endtask
 task grant_ahb (input bit value, integer delay);
     repeat (delay) @(posedge I_HCLK);
         I_DMA_HGRANT <= value;
+endtask
+
+task ready_ahb (input bit value, integer delay);
+    repeat (delay) @(posedge I_HCLK) 
+        I_DMA_HREADY <= value;
 endtask
 
 task set_image_properties (input bit [31:0] height, input bit [31:0] width, input bit [31:0] degrees, input bit [31:0] direction);
@@ -173,7 +178,10 @@ initial begin
     //scenario 1000
     set_image_properties(.height(1), .width(1), .degrees(p_deg_0), .direction(p_cw));
     write_apb(p_start, 1);
+    write_apb(p_start, 0);
     read_apb(p_start);
+    @(posedge I_PCLK) I_REG_PENABLE <= 0; //deassert when no other transaction is queued
+    ready_ahb (1, 1);
     if (O_DMA_HBUSREQ) @(posedge I_HCLK) grant_ahb(1, 1);
 
     #20000 $finish;

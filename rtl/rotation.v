@@ -25,6 +25,8 @@ module rotation (
     input I_HCLK
 );
 
+wire STOP;
+
 //register file to core
 wire [31:0] SRC_IMG;
 wire [31:0] DST_IMG;
@@ -63,6 +65,10 @@ wire [7:0] PIXEL_IN_ADDRB;
 wire [4:0] COUNT;
 wire [2:0] SIZE;
 wire WRITE;
+wire CS_PAD;
+wire CP_PAD;
+wire IMEM_WRITE;
+wire OMEM_WRITE;
 
     apbif REGISTER_FILE (
     .O_APBIF_PRDATA(O_REG_PRDATA), //module output
@@ -101,6 +107,10 @@ wire WRITE;
     .O_CP_PIXEL_IN_ADDRR(PIXEL_IN_ADDRR), //from core pixel
     .O_CP_PIXEL_IN_ADDRG(PIXEL_IN_ADDRG), //from core pixel
     .O_CP_PIXEL_IN_ADDRB(PIXEL_IN_ADDRB), //from core pixel
+    .O_CP_IMEM_WRITE(IMEM_WRITE),
+    .O_CP_OMEM_WRITE(OMEM_WRITE),
+    .O_CP_IMEM_PAD(CP_PAD), //to DMA
+    .I_CP_STOP(STOP),
     .I_CP_DMA_READY(DMA_READY), //from DMA
     .I_CP_HEIGHT(IMG_H), //from REGF
     .I_CP_WIDTH(IMG_W), //from REGF
@@ -119,6 +129,9 @@ wire WRITE;
     .O_CS_WRITE(WRITE), //to DMA
     .O_CS_NEW_H(IMG_NEW_H), //to REGF
     .O_CS_NEW_W(IMG_NEW_W), //to REGF
+    .O_CS_IMEM_PAD(CS_PAD), 
+    .O_CS_DST_IMG(DST_IMG),
+    .O_CS_STOP(STOP),
     .I_CS_DMA_READY(DMA_READY), //from DMA
     .I_CS_HEIGHT(IMG_H), //from REGF
     .I_CS_WIDTH(IMG_W), //from REGF
@@ -139,6 +152,11 @@ wire WRITE;
     .O_DMA_HBUSREQ(O_DMA_HBUSREQ), //module output
     .O_DMA_HWRITE(O_DMA_HWRITE), //module output
     .O_DMA_READY(DMA_READY), //to core
+    .I_DMA_STOP(STOP),
+    .I_DMA_IMEM_WRITE(IMEM_WRITE), 
+    .I_DMA_OMEM_WRITE(OMEM_WRITE),
+    .I_DMA_CP_IMEM_PAD(CP_PAD), 
+    .I_DMA_CS_IMEM_PAD(CS_PAD), 
     .I_DMA_ADDR(ADDR), //from core set
     .I_DMA_HRDATA(I_DMA_HRDATA), // module input 
     .I_DMA_PIXEL_OUT_ADDRR(PIXEL_OUT_ADDRR), //from core pixel

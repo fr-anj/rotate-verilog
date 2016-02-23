@@ -28,6 +28,11 @@ module dma (
     input [7:0] I_DMA_PIXEL_IN_ADDR3,
     input [4:0] I_DMA_COUNT,
     input [2:0] I_DMA_SIZE,
+    input I_DMA_STOP,
+    input I_DMA_CP_IMEM_PAD,
+    input I_DMA_CS_IMEM_PAD,
+    input I_DMA_IMEM_WRITE, //enable for input buffer
+    input I_DMA_OMEM_WRITE, //enable for output buffer
     input I_DMA_WRITE,
     input I_DMA_START,
     input I_DMA_HGRANT,
@@ -45,6 +50,7 @@ wire [31:0] DATA_WRITE_TO_AHB;
 wire HARD_RESET;
 
 assign O_DMA_READY = I_DMA_HGRANT;
+assign IMEM_PAD = I_DMA_CS_IMEM_PAD & I_DMA_CP_IMEM_PAD;
 
     ahbif AHB (
     .O_AHBIF_HBUSREQ(O_DMA_HBUSREQ),
@@ -55,6 +61,7 @@ assign O_DMA_READY = I_DMA_HGRANT;
     .O_AHBIF_HBURST(O_DMA_HBURST), 
     .O_AHBIF_HWDATA(O_DMA_HWDATA), 
     .O_AHBIF_RDATA(DATA_READ_FROM_AHB),  
+    .I_AHBIF_STOP(I_DMA_STOP),
     .I_AHBIF_HRDATA(I_DMA_HRDATA),   
     .I_AHBIF_START(I_DMA_START),  
     .I_AHBIF_SIZE(I_DMA_SIZE), 
@@ -71,6 +78,7 @@ assign O_DMA_READY = I_DMA_HGRANT;
 
     output_mem OUTBUFF (
     .O_OMEM_WDATA(DATA_WRITE_TO_AHB),
+    .I_OMEM_WRITE(I_DMA_OMEM_WRITE), //enable output buffer write
     .I_OMEM_PIXEL_B(PIXEL_B),
     .I_OMEM_PIXEL_G(PIXEL_G),
     .I_OMEM_PIXEL_R(PIXEL_R),
@@ -89,6 +97,8 @@ assign O_DMA_READY = I_DMA_HGRANT;
     .O_IMEM_PIXEL_B(PIXEL_B),
     .O_IMEM_PIXEL_G(PIXEL_G),
     .O_IMEM_PIXEL_R(PIXEL_R),
+    .I_IMEM_PAD(IMEM_PAD),
+    .I_IMEM_WRITE(I_DMA_IMEM_WRITE), //enable input buffer write
     .I_IMEM_RDATA(DATA_READ_FROM_AHB),
     .I_IMEM_PIXEL_IN_ADDR0(I_DMA_PIXEL_IN_ADDR0),
     .I_IMEM_PIXEL_IN_ADDR1(I_DMA_PIXEL_IN_ADDR1),

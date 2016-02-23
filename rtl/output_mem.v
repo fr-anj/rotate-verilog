@@ -13,7 +13,7 @@ module output_mem (
     input [7:0] I_OMEM_PIXEL_OUT_ADDR1,
     input [7:0] I_OMEM_PIXEL_OUT_ADDR2,
     input [7:0] I_OMEM_PIXEL_OUT_ADDR3,
-
+    input I_OMEM_WRITE,
     input I_OMEM_HRESET_N,
     input I_OMEM_HCLK
 );
@@ -28,14 +28,18 @@ reg [7:0] output3;
 
 always @(posedge I_OMEM_HCLK)
     if (!I_OMEM_HRESET_N)
-       for (i = 0; i < 192; i = i + 1)
-	   memory[i] <= 8'h00;
+        for (i = 0; i < 192; i = i + 1)
+            memory[i] <= 8'h00;
     else 
-	begin
-	    memory[I_OMEM_PIXEL_IN_ADDRB] <= I_OMEM_PIXEL_B;
-	    memory[I_OMEM_PIXEL_IN_ADDRG] <= I_OMEM_PIXEL_G;
-	    memory[I_OMEM_PIXEL_IN_ADDRR] <= I_OMEM_PIXEL_R;
-	end
+        if (I_OMEM_WRITE)
+            begin
+                memory[I_OMEM_PIXEL_IN_ADDRB] <= I_OMEM_PIXEL_B;
+                memory[I_OMEM_PIXEL_IN_ADDRG] <= I_OMEM_PIXEL_G;
+                memory[I_OMEM_PIXEL_IN_ADDRR] <= I_OMEM_PIXEL_R;
+            end
+        else 
+            for (i = 0; i < 192; i = i + 1)
+                memory[i] <= 8'h00;
 
 always @(posedge I_OMEM_HCLK)
     if (!I_OMEM_HRESET_N)

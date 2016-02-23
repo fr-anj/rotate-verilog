@@ -11,6 +11,7 @@ module apbif (
     output reg O_APBIF_ROT_IMG_DIR,
     output reg O_APBIF_CTRL_START,
     output reg O_APBIF_CTRL_RESET,
+    //output reg INTERRUPT
 
     input [31:0] I_APBIF_PADDR,
     input [31:0] I_APBIF_PWDATA,
@@ -50,43 +51,12 @@ assign address2 = address1 + 6'h01;
 assign address3 = address1 + 6'h02;
 assign address4 = address1 + 6'h03;
 
-always @(posedge I_APBIF_PCLK)
-    if (I_APBIF_PRESET_N)
-        curr_state <= P_IDLE;
-    else 
-        curr_state <= next_state;
-
-always @(posedge I_APBIF_PCLK)
-    if (!I_APBIF_PRESET_N)
-        next_state = P_IDLE;
-    else 
-        case (curr_state)
-            P_IDLE:
-                if (I_APBIF_PSEL) 
-                    next_state = P_SETUP;
-                else 
-                    next_state = P_IDLE;
-            P_SETUP:
-                if (I_APBIF_PENABLE)
-                    next_state = P_ACCESS;
-                else 
-                    next_state = P_SETUP;
-            P_ACCESS:
-                if (I_APBIF_PSEL)
-                    next_state = P_SETUP;
-                else 
-                    next_state = P_IDLE;
-        endcase
-
 //request master to extend read state
-always @(posedge I_APBIF_PCLK)
-    if (!I_APBIF_PRESET_N)
-	O_APBIF_PREADY <= 0;
+always @(*)
+    if (I_APBIF_PENABLE)
+        O_APBIF_PREADY <= 1;
     else 
-	if (I_APBIF_PENABLE)
-	    O_APBIF_PREADY <= 1;
-	else 
-	    O_APBIF_PREADY <= 0;
+        O_APBIF_PREADY <= 0;
 
 // write to REGISTER_FILE
 always @(posedge I_APBIF_PCLK)
@@ -94,7 +64,7 @@ always @(posedge I_APBIF_PCLK)
 	for (i = 0; i < 60; i = i + 1)
 	    REGISTER_FILE[i] <= 8'h00;
     else 
-        if (I_APBIF_PSEL && I_APBIF_PENABLE && I_APBIF_PWRITE && (next_state == P_IDLE))
+        if (I_APBIF_PSEL && I_APBIF_PENABLE && I_APBIF_PWRITE)
             case (address1)
                 //########################################################
                 //######################READ-ONLY#########################
@@ -144,17 +114,6 @@ always @(posedge I_APBIF_PCLK)
 	else 
 	    O_APBIF_PRDATA <= O_APBIF_PRDATA;
 
-/*/to core
-assign O_APBIF_DMA_SRC_IMG = {REGISTER_FILE[6'h03],REGISTER_FILE[6'h02],REGISTER_FILE[6'h01],REGISTER_FILE[6'h00]};
-assign O_APBIF_DMA_DST_IMG = {REGISTER_FILE[6'h07],REGISTER_FILE[6'h06],REGISTER_FILE[6'h05],REGISTER_FILE[6'h04]};
-assign O_APBIF_ROT_IMG_H = {REGISTER_FILE[6'h09],REGISTER_FILE[6'h08]};
-assign O_APBIF_ROT_IMG_W = {REGISTER_FILE[6'h0d],REGISTER_FILE[6'h0c]};
-assign O_APBIF_ROT_IMG_MODE = REGISTER_FILE[6'h18][1:0]; 
-assign O_APBIF_ROT_IMG_DIR = REGISTER_FILE[6'h1c][0];
-assign O_APBIF_CTRL_START = REGISTER_FILE[6'h20][0];
-assign O_APBIF_CTRL_RESET = REGISTER_FILE[6'h24][0];
-assign O_APBIF_CTRL_INTR_MASK = REGISTER_FILE[6'h28][0];
-*/
 always @(posedge I_APBIF_PCLK)
     if (!I_APBIF_PRESET_N)
         O_APBIF_DMA_SRC_IMG <= 32'h0000_0000;
@@ -202,11 +161,5 @@ always @(posedge I_APBIF_PCLK)
         O_APBIF_CTRL_RESET <= 32'h0000_0000;
     else
         O_APBIF_CTRL_RESET <= REGISTER_FILE[6'h24][0];
-/*
-always @(posedge I_APBIF_PCLK)
-    if (!I_APBIF_PRESET_N)
-        O_APBIF_CTRL_INTR_MASK <= 32'h0000_0000;
-    else
-        O_APBIF_CTRL_INTR_MASK <= REGISTER_FILE[6'h28][0];
-*/
+
 endmodule

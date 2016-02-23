@@ -2,13 +2,14 @@
 
 module core_set (
     output reg [31:0] O_CS_ADDR,
-    output reg O_CS_WRITE,
-    output [4:0] O_CS_COUNT,
-    output [2:0] O_CS_SIZE,
-    output [15:0] O_CS_NEW_H, 
-    output [15:0] O_CS_NEW_W, 
-
-
+    output reg O_CS_WRITE, //to dma
+    output reg O_CS_IMEM_PAD, //to imem
+    output [31:0] O_CS_DST_IMG, //to register file
+    output [15:0] O_CS_NEW_H, //to register file
+    output [15:0] O_CS_NEW_W, //to register file
+    output [4:0] O_CS_COUNT, //to dma
+    output [2:0] O_CS_SIZE, //to dma
+    output O_CS_STOP, 
     input [15:0] I_CS_HEIGHT,
     input [15:0] I_CS_WIDTH,
     input [1:0] I_CS_DEGREES,
@@ -36,16 +37,18 @@ parameter 	P_DEG_0 	= 2'h0,
 //registers
 reg [16:0] new_height;
 reg [16:0] new_width;
+reg [31:0] size;
+reg [33:0] total;
 
 //counters
-reg [5:0] set_count; 	//count to 64 
-reg [2:0] burst_count; 	//count to 8	
-reg [11:0] hdiv_count; 	//count to HDIV
+reg [5:0] set_count; //count to 64 
+reg [2:0] burst_count; //count to 8	
+reg [11:0] hdiv_count; //count to HDIV
 reg [11:0] wdiv_count; //count to WDIV
 
 //addresses
-reg [17:0] row; 	//read row
-reg [17:0] col; 	//read column
+reg [17:0] row;	//read row
+reg [17:0] col;	//read column
 reg [17:0] row0; 	
 reg [17:0] col0;	
 reg [17:0] row90;
@@ -56,9 +59,9 @@ reg [17:0] row270;
 reg [17:0] col270; 	
 
 //address decrement or increment
-reg [23:0] dec90; 	//decrement 
-reg [23:0] dec180;	//decrement
-reg [23:0] inc270;	//increment
+reg [23:0] dec90; //decrement 
+reg [23:0] dec180; //decrement
+reg [23:0] inc270; //increment
 
 //signals
 reg LAST_HDIV;
@@ -76,6 +79,7 @@ wire [2:0] HMOD;
 wire [2:0] WMOD;
 wire [4:0] HDEFICIT;
 wire [4:0] WDEFICIT;
+wire [16:0] PAD_CHECK;
 
 //temp
 wire [15:0] temp1;
@@ -135,6 +139,8 @@ assign STOP_ROT = (I_CS_HEIGHT[15] || (I_CS_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
 //assign LAST_WDIV = (wdiv_count == WDIV - 1)? 1: 0;
 assign LAST = (LAST_HDIV && LAST_WDIV)? 1 : 0;
+assign PAD_CHECK = col + 3'h7;
+assign O_CS_STOP = LAST;
 
 assign out_address = row + col;
 assign out_address0 = row0 + col0;
@@ -147,6 +153,22 @@ assign O_CS_NEW_W = new_width;
 
 assign O_CS_SIZE = 3'h2;
 assign O_CS_COUNT = 5'h06;
+assign O_CS_DST_IMG = total;
+
+always @(*)
+begin
+    size = I_CS_HEIGHT * I_CS_WIDTH;
+    total = (size << 1) + size;
+end
+
+always @(posedge I_CS_HCLK)
+    if (!I_CS_HRESET_N)
+        O_CS_IMEM_PAD <= 0;
+    else 
+        if (PAD_CHECK > I_CS_WIDTH)
+            O_CS_IMEM_PAD <= 1;
+        else 
+            O_CS_IMEM_PAD <= 0;
 
 always @(*)
     if (curr_state == P_WRITE)
@@ -251,7 +273,7 @@ always @(posedge I_CS_HCLK)
     if (!I_CS_HRESET_N)
 	set_count <= 6'h00;
     else 
-	if (curr_state == P_IDLE)
+	if (!I_CS_DMA_READY)
 	    set_count <= 6'h00;
 	else 
 	    set_count <= set_count + 1;
@@ -261,7 +283,7 @@ always @(posedge I_CS_HCLK)
     if (!I_CS_HRESET_N)
 	burst_count <= 3'h0;
     else 
-	if (curr_state == P_IDLE)
+	if (!I_CS_DMA_READY)
 	    burst_count <= 3'h0;
 	else
 	    burst_count <= burst_count + 1;

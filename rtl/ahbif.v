@@ -15,6 +15,7 @@ module ahbif (
 	input [31:0] I_AHBIF_WDATA, //from output FIFO
 	input [4:0] I_AHBIF_COUNT, //from core
 	input [2:0] I_AHBIF_SIZE, //from register file
+        input I_AHBIF_STOP,
 	input I_AHBIF_START, //from register file
 	input I_AHBIF_WRITE, //from core
 	input I_AHBIF_HGRANT, //from arbiter
@@ -117,7 +118,7 @@ always @(*)
                         next_state = p_s_idle;
                     else 
                         if (I_AHBIF_HREADY)
-                                if (I_AHBIF_START)
+                                if (!I_AHBIF_STOP)
                                         next_state = p_s_busreq;
                                 else 
                                         next_state = p_s_idle;
@@ -280,13 +281,13 @@ always @(posedge I_AHBIF_HCLK)
 	if (!I_AHBIF_HRESET_N)
 		O_AHBIF_HBUSREQ <= 0;
 	else 
-		if (next_state == p_s_idle)
+            if (I_AHBIF_START)
+                    O_AHBIF_HBUSREQ <= 1;
+            else 
+                if (I_AHBIF_STOP)
                     O_AHBIF_HBUSREQ <= 0;
-                else
-                    if (I_AHBIF_START)
-                            O_AHBIF_HBUSREQ <= 1;
-                    else 
-                            O_AHBIF_HBUSREQ <= O_AHBIF_HBUSREQ;
+                else 
+                    O_AHBIF_HBUSREQ <= O_AHBIF_HBUSREQ;
 
 //process transfer counter
 always @(posedge I_AHBIF_HCLK)
