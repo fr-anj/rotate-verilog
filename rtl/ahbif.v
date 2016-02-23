@@ -280,10 +280,13 @@ always @(posedge I_AHBIF_HCLK)
 	if (!I_AHBIF_HRESET_N)
 		O_AHBIF_HBUSREQ <= 0;
 	else 
-		if (I_AHBIF_START)
-			O_AHBIF_HBUSREQ <= 1;
-		else 
-			O_AHBIF_HBUSREQ <= O_AHBIF_HBUSREQ;
+		if (next_state == p_s_idle)
+                    O_AHBIF_HBUSREQ <= 0;
+                else
+                    if (I_AHBIF_START)
+                            O_AHBIF_HBUSREQ <= 1;
+                    else 
+                            O_AHBIF_HBUSREQ <= O_AHBIF_HBUSREQ;
 
 //process transfer counter
 always @(posedge I_AHBIF_HCLK)
@@ -302,4 +305,5 @@ assign temp = I_AHBIF_ADDR[1:0] & 2'h3;
 assign LAST = ({1'b0,transfer_count} < (I_AHBIF_COUNT - 1))? 0 : 1;
 assign LIMIT = (addr_check[11:0] == 11'h400)? 1 : 0;
 assign O_AHBIF_HWRITE = I_AHBIF_WRITE;
+
 endmodule
