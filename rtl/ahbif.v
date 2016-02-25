@@ -9,6 +9,7 @@ module ahbif (
 	output reg O_AHBIF_HBUSREQ, //to arbiter
 	output [31:0] O_AHBIF_RDATA, //to input FIFO 
     	output O_AHBIF_HWRITE, //to slave 
+        output O_AHBIF_READY, //to core
 
 	input [31:0] I_AHBIF_HRDATA, //from slave
 	input [31:0] I_AHBIF_ADDR, //from core
@@ -34,6 +35,7 @@ reg [32:0] address;
 reg [31:0] new_addr;
 reg [31:0] data;
 reg [31:0] addr_check;
+reg READY;
 
 wire LAST, LIMIT;
 
@@ -64,6 +66,16 @@ parameter 	p_s_idle = 3'b000,
 		p_s_seq	= 3'b011,
 		p_s_busy = 3'b100,
 		p_s_finish = 3'b101;
+
+//ready signal to core
+always @(posedge I_AHBIF_HCLK)
+    if (!I_AHBIF_HRESET_N)
+        READY <= 0;
+    else 
+        if (next_state == p_s_seq)
+            READY <= 1;
+        else 
+            READY <= READY;
 
 //current state
 always @(posedge I_AHBIF_HCLK)
@@ -118,10 +130,10 @@ always @(*)
                         next_state = p_s_idle;
                     else 
                         if (I_AHBIF_HREADY)
-                                if (!I_AHBIF_STOP)
-                                        next_state = p_s_busreq;
-                                else 
+                                if (I_AHBIF_STOP && I_AHBIF_WRITE)
                                         next_state = p_s_idle;
+                                else 
+                                        next_state = p_s_busreq;
                         else 
                                 next_state = p_s_finish;
                 default:
@@ -306,5 +318,6 @@ assign temp = I_AHBIF_ADDR[1:0] & 2'h3;
 assign LAST = ({1'b0,transfer_count} < (I_AHBIF_COUNT - 1))? 0 : 1;
 assign LIMIT = (addr_check[11:0] == 11'h400)? 1 : 0;
 assign O_AHBIF_HWRITE = I_AHBIF_WRITE;
+assign O_AHBIF_READY = READY;
 
 endmodule

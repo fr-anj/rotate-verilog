@@ -46,6 +46,8 @@ module tb_rotation ();
     .I_HCLK(I_HCLK)
     );
 
+integer image;
+
 parameter   p_source = 8'h00, p_destination = 8'h04,
             p_height = 8'h08, p_width = 8'h0c,
             p_new_height = 8'h10, p_new_width = 8'h14,
@@ -147,29 +149,48 @@ function integer delay (integer new_height, integer new_width);
 
     delay = write_delay * 2;
 endfunction
-
-/*file handling
-//reads image by 4 bytes every clock cycle
-task read_image (string filename);
-    image = $fopen(filename, "r");
+/*
+*task read_memory (input bit [31:0] address);
+*    wire [31:0] data;
+*    @(posedge I_HCLK)
+*        data <= {memory[address], memory[address + 1], memory[address + 2], memory[address + 3]}; 
+*    read_memory = data;
+*endtask
+*/
+task create_image (input bit [31:0] data, filename);
+    image = $fopen("filename","w");
     if (image == 0)
         begin
-            $display("error in reading image");
+            $display("error in writing image");
             $finish;
         end
-
-    always @(posedge I_HCLK)
-
     $fclose(filename);
 endtask
 
-task create_image (input bit [31:0] data, filename);
-    image = $fopen(
-endtask
-*/
+//read file
+always @(*) 
+
+    
+string file = "image0.bmp";
 initial begin
     $vcdplusmemon;
     $vcdpluson;
+    
+    $display("================================================");
+    $display("===============start simulation=================");
+
+    image = $fopen(file, "r");
+    if (image == 0) 
+        begin
+            $display("ERROR in reading file.. file does not exist o__O\n");
+            $display("===============failed simulation================");
+            $display("================================================\n");
+            $finish; 
+        end
+    else 
+        $display("reading file..");
+
+    $fclose(image);
     //initialize all inputs
     initialize();
 
@@ -183,6 +204,10 @@ initial begin
     @(posedge I_PCLK) I_REG_PENABLE <= 0; //deassert when no other transaction is queued
     ready_ahb (1, 1);
     if (O_DMA_HBUSREQ) @(posedge I_HCLK) grant_ahb(1, 1);
+    
+    
+    $display("================end simulation==================");
+    $display("================================================\n");
 
     #20000 $finish;
 end

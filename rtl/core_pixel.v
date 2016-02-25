@@ -1,3 +1,4 @@
+//this module should start during nseq of dma -NOT- during hgrant
 `timescale 1ns/1ps
 
 module core_pixel (
@@ -309,8 +310,8 @@ always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	begin 
 	    base_r <= 8'h00;
-	    base_g <= 8'h00;
-	    base_b <= 8'h00;
+	    base_g <= 8'h01;
+	    base_b <= 8'h02;
 	end
     else 
 	case (next_state) 
@@ -364,8 +365,8 @@ always @(posedge I_CP_HCLK)
             default:
                 begin 
                     base_r <= 8'h00;
-                    base_g <= 8'h00;
-                    base_b <= 8'h00;
+                    base_g <= 8'h01;
+                    base_b <= 8'h02;
                 end
 	endcase
 
@@ -374,8 +375,8 @@ always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	begin
 	    addr_r <= 8'h00;
-	    addr_g <= 8'h00;
-	    addr_b <= 8'h00;
+	    addr_g <= 8'h01;
+	    addr_b <= 8'h02;
 	end
     else
 	case (next_state) 
@@ -449,8 +450,8 @@ always @(posedge I_CP_HCLK)
             default:
                 begin
                     addr_r <= 8'h00;
-                    addr_g <= 8'h00;
-                    addr_b <= 8'h00;
+                    addr_g <= 8'h01;
+                    addr_b <= 8'h02;
                 end
 	endcase
 
@@ -458,15 +459,15 @@ always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	begin
 	    O_CP_PIXEL_IN_ADDRR <= 8'h00;
-	    O_CP_PIXEL_IN_ADDRG <= 8'h00;
-	    O_CP_PIXEL_IN_ADDRB <= 8'h00;
+	    O_CP_PIXEL_IN_ADDRG <= 8'h01;
+	    O_CP_PIXEL_IN_ADDRB <= 8'h02;
 	end
     else
         if (next_state == P_IDLE)
             begin
                 O_CP_PIXEL_IN_ADDRR <= 8'h00;
-                O_CP_PIXEL_IN_ADDRG <= 8'h00;
-                O_CP_PIXEL_IN_ADDRB <= 8'h00;
+                O_CP_PIXEL_IN_ADDRG <= 8'h01;
+                O_CP_PIXEL_IN_ADDRB <= 8'h02;
             end
         else 
             begin
@@ -518,9 +519,9 @@ always @(posedge I_CP_HCLK)
             default:
                 begin
                     O_CP_PIXEL_OUT_ADDR0 <= 8'h00;
-                    O_CP_PIXEL_OUT_ADDR1 <= 8'h00;
-                    O_CP_PIXEL_OUT_ADDR2 <= 8'h00;
-                    O_CP_PIXEL_OUT_ADDR3 <= 8'h00;
+                    O_CP_PIXEL_OUT_ADDR1 <= 8'h01;
+                    O_CP_PIXEL_OUT_ADDR2 <= 8'h02;
+                    O_CP_PIXEL_OUT_ADDR3 <= 8'h03;
                 end
 	endcase
 
