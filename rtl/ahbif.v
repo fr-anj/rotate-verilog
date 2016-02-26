@@ -7,9 +7,9 @@ module ahbif (
 	output reg [2:0] O_AHBIF_HBURST, //to slave
 	output reg [1:0] O_AHBIF_HTRANS, //to slave
 	output reg O_AHBIF_HBUSREQ, //to arbiter
-	output [31:0] O_AHBIF_RDATA, //to input FIFO 
     	output O_AHBIF_HWRITE, //to slave 
         output O_AHBIF_READY, //to core
+        output O_AHBIF_BUFF_WRITE,
 
 	input [31:0] I_AHBIF_HRDATA, //from slave
 	input [31:0] I_AHBIF_ADDR, //from core
@@ -36,6 +36,7 @@ reg [31:0] new_addr;
 reg [31:0] data;
 reg [31:0] addr_check;
 reg READY;
+reg BUFF_WRITE;
 
 wire LAST, LIMIT;
 
@@ -67,12 +68,28 @@ parameter 	p_s_idle = 3'b000,
 		p_s_busy = 3'b100,
 		p_s_finish = 3'b101;
 
+always @(posedge I_AHBIF_HCLK)
+    if (!I_AHBIF_HRESET_N)
+        BUFF_WRITE <= 0;
+    else 
+        if (!I_AHBIF_WRITE)
+            case (next_state)
+                p_s_nseq:
+                    BUFF_WRITE <= 1;
+                p_s_idle:
+                    BUFF_WRITE <= 0;
+                default:
+                    BUFF_WRITE <= BUFF_WRITE;
+            endcase
+        else 
+            BUFF_WRITE <= 0;
+
 //ready signal to core
 always @(posedge I_AHBIF_HCLK)
     if (!I_AHBIF_HRESET_N)
         READY <= 0;
     else 
-        if (next_state == p_s_seq)
+        if (next_state == p_s_nseq)
             READY <= 1;
         else 
             READY <= READY;
@@ -313,11 +330,11 @@ always @(posedge I_AHBIF_HCLK)
 		else 
 			transfer_count <= 4'h0;
 
-assign O_AHBIF_RDATA = (I_AHBIF_RESET)? 32'h0000_0000 : I_AHBIF_HRDATA; //treat as invalid when soft reset
 assign temp = I_AHBIF_ADDR[1:0] & 2'h3;
 assign LAST = ({1'b0,transfer_count} < (I_AHBIF_COUNT - 1))? 0 : 1;
 assign LIMIT = (addr_check[11:0] == 11'h400)? 1 : 0;
 assign O_AHBIF_HWRITE = I_AHBIF_WRITE;
 assign O_AHBIF_READY = READY;
+assign O_AHBIF_BUFF_WRITE = BUFF_WRITE;
 
 endmodule

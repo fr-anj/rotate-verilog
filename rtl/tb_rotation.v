@@ -47,6 +47,8 @@ module tb_rotation ();
     );
 
 integer image;
+integer new_image;
+integer count;
 
 parameter   p_source = 8'h00, p_destination = 8'h04,
             p_height = 8'h08, p_width = 8'h0c,
@@ -149,14 +151,7 @@ function integer delay (integer new_height, integer new_width);
 
     delay = write_delay * 2;
 endfunction
-/*
-*task read_memory (input bit [31:0] address);
-*    wire [31:0] data;
-*    @(posedge I_HCLK)
-*        data <= {memory[address], memory[address + 1], memory[address + 2], memory[address + 3]}; 
-*    read_memory = data;
-*endtask
-*/
+
 task create_image (input bit [31:0] data, filename);
     image = $fopen("filename","w");
     if (image == 0)
@@ -167,19 +162,18 @@ task create_image (input bit [31:0] data, filename);
     $fclose(filename);
 endtask
 
-//read file
-always @(*) 
+string file = "./input/input.txt";
+string new_file = "./output/rtloutput.txt";
 
-    
-string file = "image0.bmp";
 initial begin
     $vcdplusmemon;
     $vcdpluson;
     
-    $display("================================================");
+    $display("\n\n================================================");
     $display("===============start simulation=================");
 
     image = $fopen(file, "r");
+    new_image = $fopen(new_file, "w");
     if (image == 0) 
         begin
             $display("ERROR in reading file.. file does not exist o__O\n");
@@ -190,26 +184,60 @@ initial begin
     else 
         $display("reading file..");
 
-    $fclose(image);
+    if (new_image == 0)
+        begin
+            $display("ERROR in creating file..\n");
+            $display("===============failed simulation================");
+            $display("================================================\n");
+            $finish; 
+        end 
+    else 
+        $display("writing file..");
+
     //initialize all inputs
     initialize();
 
     hard_reset();
 
     //scenario 1000
-    set_image_properties(.height(1), .width(1), .degrees(p_deg_0), .direction(p_cw));
+    set_image_properties(.height(1), .width(1), .degrees(p_deg_90), .direction(p_cw));
     write_apb(p_start, 1);
     write_apb(p_start, 0);
     read_apb(p_start);
     @(posedge I_PCLK) I_REG_PENABLE <= 0; //deassert when no other transaction is queued
     ready_ahb (1, 1);
+
+    //fork
     if (O_DMA_HBUSREQ) @(posedge I_HCLK) grant_ahb(1, 1);
-    
-    
+
     $display("================end simulation==================");
     $display("================================================\n");
 
-    #20000 $finish;
+    #460  
+
+    $fclose(image);
+    $fclose(new_image);
+    
+    $finish;
 end
+
+always @(posedge I_HCLK) 
+    if (!$feof(image) && (O_DMA_HTRANS != 0) && !O_DMA_HWRITE) begin
+            $fscanf(image, "%d", I_DMA_HRDATA[7:0]);
+            $fscanf(image, "%d", I_DMA_HRDATA[15:8]);
+            $fscanf(image, "%d", I_DMA_HRDATA[23:16]);
+            $fscanf(image, "%d", I_DMA_HRDATA[31:24]);
+        end
+    else 
+            I_DMA_HRDATA <= I_DMA_HRDATA;
+
+always @(posedge I_HCLK)
+    if (!O_INTR_DONE)
+        if (O_DMA_HWRITE) begin
+            $fdisplay(image, O_DMA_HWDATA[7:0]);
+            $fdisplay(image, O_DMA_HWDATA[15:8]);
+            $fdisplay(image, O_DMA_HWDATA[23:16]);
+            $fdisplay(image, O_DMA_HWDATA[31:24]);
+        end
 
 endmodule

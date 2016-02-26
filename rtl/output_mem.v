@@ -38,19 +38,22 @@ always @(posedge I_OMEM_HCLK)
                 memory[I_OMEM_PIXEL_IN_ADDRR] <= I_OMEM_PIXEL_R;
             end
         else 
-            for (i = 0; i < 192; i = i + 1)
-                memory[i] <= 8'h00;
+            begin
+                memory[I_OMEM_PIXEL_IN_ADDRB] <= memory[I_OMEM_PIXEL_IN_ADDRB];
+                memory[I_OMEM_PIXEL_IN_ADDRG] <= memory[I_OMEM_PIXEL_IN_ADDRG];
+                memory[I_OMEM_PIXEL_IN_ADDRR] <= memory[I_OMEM_PIXEL_IN_ADDRR];
+            end
 
 always @(posedge I_OMEM_HCLK)
     if (!I_OMEM_HRESET_N)
 	output0 <= 8'h00;
     else 
 	if (I_OMEM_PIXEL_OUT_ADDR0 == I_OMEM_PIXEL_IN_ADDRB)
-	    output0 <= memory[I_OMEM_PIXEL_B];
+	    output0 <= memory[I_OMEM_PIXEL_IN_ADDRB];
 	else if (I_OMEM_PIXEL_OUT_ADDR0 == I_OMEM_PIXEL_IN_ADDRG)
-	    output0 <= memory[I_OMEM_PIXEL_G];
+	    output0 <= memory[I_OMEM_PIXEL_IN_ADDRG];
 	else if (I_OMEM_PIXEL_OUT_ADDR0 == I_OMEM_PIXEL_IN_ADDRR)
-	    output0 <= memory[I_OMEM_PIXEL_R];
+	    output0 <= memory[I_OMEM_PIXEL_IN_ADDRR];
 	else 
 	    output0 <= memory[I_OMEM_PIXEL_OUT_ADDR0];
 
@@ -59,11 +62,11 @@ always @(posedge I_OMEM_HCLK)
 	output1 <= 8'h00;
     else 
 	if (I_OMEM_PIXEL_OUT_ADDR1 == I_OMEM_PIXEL_IN_ADDRB)
-	    output1 <= memory[I_OMEM_PIXEL_B];
+	    output1 <= memory[I_OMEM_PIXEL_IN_ADDRB];
 	else if (I_OMEM_PIXEL_OUT_ADDR1 == I_OMEM_PIXEL_IN_ADDRG)
-	    output1 <= memory[I_OMEM_PIXEL_G];
+	    output1 <= memory[I_OMEM_PIXEL_IN_ADDRG];
 	else if (I_OMEM_PIXEL_OUT_ADDR1 == I_OMEM_PIXEL_IN_ADDRR)
-	    output1 <= memory[I_OMEM_PIXEL_R];
+	    output1 <= memory[I_OMEM_PIXEL_IN_ADDRR];
 	else 
 	    output1 <= memory[I_OMEM_PIXEL_OUT_ADDR1];
 
@@ -72,11 +75,11 @@ always @(posedge I_OMEM_HCLK)
 	output2 <= 8'h00;
     else 
 	if (I_OMEM_PIXEL_OUT_ADDR2 == I_OMEM_PIXEL_IN_ADDRB)
-	    output2 <= memory[I_OMEM_PIXEL_B];
+	    output2 <= memory[I_OMEM_PIXEL_IN_ADDRB];
 	else if (I_OMEM_PIXEL_OUT_ADDR2 == I_OMEM_PIXEL_IN_ADDRG)
-	    output2 <= memory[I_OMEM_PIXEL_G];
+	    output2 <= memory[I_OMEM_PIXEL_IN_ADDRG];
 	else if (I_OMEM_PIXEL_OUT_ADDR2 == I_OMEM_PIXEL_IN_ADDRR)
-	    output2 <= memory[I_OMEM_PIXEL_R];
+	    output2 <= memory[I_OMEM_PIXEL_IN_ADDRR];
 	else 
 	    output2 <= memory[I_OMEM_PIXEL_OUT_ADDR2];
 
@@ -85,11 +88,11 @@ always @(posedge I_OMEM_HCLK)
 	output3 <= 8'h00;
     else 
 	if (I_OMEM_PIXEL_OUT_ADDR3 == I_OMEM_PIXEL_IN_ADDRB)
-	    output3 <= memory[I_OMEM_PIXEL_B];
+	    output3 <= memory[I_OMEM_PIXEL_IN_ADDRB];
 	else if (I_OMEM_PIXEL_OUT_ADDR3 == I_OMEM_PIXEL_IN_ADDRG)
-	    output3 <= memory[I_OMEM_PIXEL_G];
+	    output3 <= memory[I_OMEM_PIXEL_IN_ADDRG];
 	else if (I_OMEM_PIXEL_OUT_ADDR3 == I_OMEM_PIXEL_IN_ADDRR)
-	    output3 <= memory[I_OMEM_PIXEL_R];
+	    output3 <= memory[I_OMEM_PIXEL_IN_ADDRR];
 	else 
 	    output3 <= memory[I_OMEM_PIXEL_OUT_ADDR3];
 

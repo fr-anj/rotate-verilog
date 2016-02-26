@@ -67,8 +67,8 @@ wire [2:0] SIZE;
 wire WRITE;
 wire CS_PAD;
 wire CP_PAD;
-wire IMEM_WRITE;
-wire OMEM_WRITE;
+
+assign O_INTR_DONE = ;
 
     apbif REGISTER_FILE (
     .O_APBIF_PRDATA(O_REG_PRDATA), //module output
@@ -107,8 +107,6 @@ wire OMEM_WRITE;
     .O_CP_PIXEL_IN_ADDRR(PIXEL_IN_ADDRR), //from core pixel
     .O_CP_PIXEL_IN_ADDRG(PIXEL_IN_ADDRG), //from core pixel
     .O_CP_PIXEL_IN_ADDRB(PIXEL_IN_ADDRB), //from core pixel
-    .O_CP_IMEM_WRITE(IMEM_WRITE),
-    .O_CP_OMEM_WRITE(OMEM_WRITE),
     .O_CP_IMEM_PAD(CP_PAD), //to DMA
     .I_CP_STOP(STOP),
     .I_CP_DMA_READY(DMA_READY), //from DMA
@@ -153,8 +151,6 @@ wire OMEM_WRITE;
     .O_DMA_HWRITE(O_DMA_HWRITE), //module output
     .O_DMA_READY(DMA_READY), //to core
     .I_DMA_STOP(STOP),
-    .I_DMA_IMEM_WRITE(IMEM_WRITE), 
-    .I_DMA_OMEM_WRITE(OMEM_WRITE),
     .I_DMA_CP_IMEM_PAD(CP_PAD), 
     .I_DMA_CS_IMEM_PAD(CS_PAD), 
     .I_DMA_ADDR(ADDR), //from core set

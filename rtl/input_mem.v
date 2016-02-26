@@ -36,8 +36,12 @@ always @(posedge I_IMEM_HCLK)
                 memory[I_IMEM_PIXEL_IN_ADDR3] <= I_IMEM_RDATA[31:24];
             end
         else 
-            for (i = 0; i < 192; i = i + 1)
-                memory[i] <= 8'h00;
+            begin 
+                memory[I_IMEM_PIXEL_IN_ADDR0] <= memory[I_IMEM_PIXEL_IN_ADDR0];
+                memory[I_IMEM_PIXEL_IN_ADDR1] <= memory[I_IMEM_PIXEL_IN_ADDR1];
+                memory[I_IMEM_PIXEL_IN_ADDR2] <= memory[I_IMEM_PIXEL_IN_ADDR2];
+                memory[I_IMEM_PIXEL_IN_ADDR3] <= memory[I_IMEM_PIXEL_IN_ADDR3];
+            end
 
 //read data form the input buffer
 //data forward the input data
