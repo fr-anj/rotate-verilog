@@ -68,21 +68,18 @@ parameter 	p_s_idle = 3'b000,
 		p_s_busy = 3'b100,
 		p_s_finish = 3'b101;
 
-always @(posedge I_AHBIF_HCLK)
-    if (!I_AHBIF_HRESET_N)
-        BUFF_WRITE <= 0;
+always @(*)
+    if (!I_AHBIF_WRITE)
+	case (curr_state)
+	    p_s_seq:
+		BUFF_WRITE = 1;
+	    p_s_idle:
+		BUFF_WRITE = 0;
+	    default:
+		BUFF_WRITE = BUFF_WRITE;
+	endcase
     else 
-        if (!I_AHBIF_WRITE)
-            case (next_state)
-                p_s_nseq:
-                    BUFF_WRITE <= 1;
-                p_s_idle:
-                    BUFF_WRITE <= 0;
-                default:
-                    BUFF_WRITE <= BUFF_WRITE;
-            endcase
-        else 
-            BUFF_WRITE <= 0;
+	BUFF_WRITE = 0;
 
 //ready signal to core
 always @(posedge I_AHBIF_HCLK)
@@ -313,7 +310,7 @@ always @(posedge I_AHBIF_HCLK)
             if (I_AHBIF_START)
                     O_AHBIF_HBUSREQ <= 1;
             else 
-                if (I_AHBIF_STOP)
+                if (I_AHBIF_STOP && I_AHBIF_WRITE)
                     O_AHBIF_HBUSREQ <= 0;
                 else 
                     O_AHBIF_HBUSREQ <= O_AHBIF_HBUSREQ;

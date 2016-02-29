@@ -68,7 +68,7 @@ wire WRITE;
 wire CS_PAD;
 wire CP_PAD;
 
-assign O_INTR_DONE = ;
+assign O_INTR_DONE = STOP && O_DMA_HBUSREQ; 
 
     apbif REGISTER_FILE (
     .O_APBIF_PRDATA(O_REG_PRDATA), //module output

@@ -10,6 +10,7 @@ module core_set (
     output [4:0] O_CS_COUNT, //to dma
     output [2:0] O_CS_SIZE, //to dma
     output O_CS_STOP, 
+    output O_CS_IMEM_PAD, //TODO: transfer from core_pixel
     input [15:0] I_CS_HEIGHT,
     input [15:0] I_CS_WIDTH,
     input [1:0] I_CS_DEGREES,
@@ -47,16 +48,16 @@ reg [11:0] hdiv_count; //count to HDIV
 reg [11:0] wdiv_count; //count to WDIV
 
 //addresses
-reg [17:0] row;	//read row
-reg [17:0] col;	//read column
-reg [17:0] row0; 	
-reg [17:0] col0;	
-reg [17:0] row90;
-reg [17:0] col90; 	
-reg [17:0] row180; 	
-reg [17:0] col180; 	
-reg [17:0] row270; 	
-reg [17:0] col270; 	
+reg [31:0] row;	//read row
+reg [31:0] col;	//read column
+reg [31:0] row0; 	
+reg [31:0] col0;	
+reg [31:0] row90;
+reg [31:0] col90; 	
+reg [31:0] row180; 	
+reg [31:0] col180; 	
+reg [31:0] row270; 	
+reg [31:0] col270; 	
 
 //address decrement or increment
 reg [23:0] dec90; //decrement 
@@ -68,13 +69,15 @@ reg LAST_HDIV;
 reg LAST_WDIV;
 reg FIRST;
 
+//padding registers:
+
 //height and width properties
-wire [17:0] HEIGHT;
-wire [17:0] WIDTH;
-wire [18:0] N_HEIGHT;
-wire [18:0] N_WIDTH;
-wire [12:0] HDIV;
-wire [12:0] WDIV;
+wire [15:0] HEIGHT;
+wire [15:0] WIDTH;
+wire [15:0] N_HEIGHT;
+wire [15:0] N_WIDTH;
+wire [11:0] HDIV;
+wire [11:0] WDIV;
 wire [2:0] HMOD;
 wire [2:0] WMOD;
 wire [4:0] HDEFICIT;
@@ -86,6 +89,7 @@ wire [15:0] temp1;
 wire [15:0] temp2;
 wire [13:0] HDIVMIN;
 wire [13:0] WDIVMIN;
+wire temp_pad;
 
 //address manipulation
 wire [23:0] START_90;
@@ -135,6 +139,8 @@ assign WDIVMIN = WDIV - 1;
 assign COL_270 = (WDIV == 1)? 0 : (HDIVMIN << 4) + (WDIV << 3); //HDIVMIN * 24
 assign ROWINC_270 = ROWDEC_90; 
 
+assign temp_pad = (I_CS_WIDTH[2:0] == 3'h0)? I_CS_WIDTH[2:0] : (I_CS_WIDTH[2:0] - 1);
+
 assign STOP_ROT = (I_CS_HEIGHT[15] || (I_CS_WIDTH[15:14] != 2'h0))? 1 : 0;
 //assign LAST_HDIV = (hdiv_count == HDIV)? 1 : 0;
 //assign LAST_WDIV = (wdiv_count == WDIV - 1)? 1: 0;
@@ -154,6 +160,12 @@ assign O_CS_NEW_W = new_width;
 assign O_CS_SIZE = 3'h2;
 assign O_CS_COUNT = 5'h06;
 assign O_CS_DST_IMG = total;
+
+always @(*) 
+    if (beat_count > temp_pad) //not divisible by 8
+	O_CS_IMEM_PAD = 1;
+    else 
+	O_CS_IMEM_PAD = 0;
 
 always @(*)
 begin
@@ -299,7 +311,7 @@ always @(posedge I_CS_HCLK)
 	    P_READ:
 		if (!LAST_HDIV)
 		    if (set_count == 6'h3f)
-			hdiv_count <= hdiv_count + 1;
+			hdiv_count <= hdiv_count[10:0] + 1;
 		    else 
 			hdiv_count <= hdiv_count;
 		else 
@@ -324,7 +336,7 @@ always @(posedge I_CS_HCLK)
 	    P_READ:
 		if (!LAST_WDIV)
 		    if (LAST_HDIV && (set_count == 6'h3f))
-			wdiv_count <= wdiv_count + 1;
+			wdiv_count <= wdiv_count[10:0] + 1;
 		    else 
 			wdiv_count <= wdiv_count;
 		else 
@@ -345,48 +357,48 @@ always @(posedge I_CS_HCLK)
 //current read row
 always @(posedge I_CS_HCLK)
     if (!I_CS_HRESET_N)
-	row <= 16'h0000;
+	row <= 17'h0_0000;
     else 
 	case (next_state)
 	    P_IDLE:
-		row <= 16'h0000;
+		row <= 17'h0_0000;
 	    P_READ:
 		    if (LAST_HDIV && (set_count == 6'h3f))
-			row <= 16'h0000;
+			row <= 17'h0_0000;
 		    else 
 			if (burst_count == 3'h7)
-			    row <= row + WIDTH;
+			    row <= row[15:0] + WIDTH;
 			else 
 			    row <= row;
 	    P_WRITE:
 		row <= row;
             default: 
-                row <= 16'h0000;
+                row <= 17'h0_0000;
 	endcase
 
 //current read column 
 always @(posedge I_CS_HCLK)
     if (!I_CS_HRESET_N)
-	col <= 16'h0000;
+	col <= 17'h0_0000;
     else 
 	case (next_state)
 	    P_IDLE:
-		col <= 16'h0000;
+		col <= 17'h0_0000;
 	    P_READ:
 		if (!LAST_WDIV)
 		    if (LAST_HDIV && (set_count == 6'h3f))
-			col <= col + 24;
+			col <= col + 17'h0_0018;
 		    else 
 			col <= col;
 		else 
 		    if (LAST_HDIV && (set_count == 6'h3f))
-			col <= 16'h0000;
+			col <= 17'h0_0000;
 		    else 
 			col <= col;
 	    P_WRITE:
 		col <= col;
             default:
-                col <= 16'h0000;
+                col <= 17'h0_0000;
 	endcase
 
 //*****************************************************//
