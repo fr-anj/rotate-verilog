@@ -10,7 +10,7 @@ module core_set (
     output [4:0] O_CS_COUNT, //to dma
     output [2:0] O_CS_SIZE, //to dma
     output O_CS_STOP, 
-    output O_CS_IMEM_PAD, //TODO: transfer from core_pixel
+    //output O_CS_IMEM_PAD, //TODO: transfer from core_pixel
     input [15:0] I_CS_HEIGHT,
     input [15:0] I_CS_WIDTH,
     input [1:0] I_CS_DEGREES,
@@ -162,7 +162,7 @@ assign O_CS_COUNT = 5'h06;
 assign O_CS_DST_IMG = total;
 
 always @(*) 
-    if (beat_count > temp_pad) //not divisible by 8
+    if (burst_count > temp_pad) //not divisible by 8
 	O_CS_IMEM_PAD = 1;
     else 
 	O_CS_IMEM_PAD = 0;
@@ -173,14 +173,14 @@ begin
     total = (size << 1) + size;
 end
 
-always @(posedge I_CS_HCLK)
-    if (!I_CS_HRESET_N)
-        O_CS_IMEM_PAD <= 0;
-    else 
-        if (PAD_CHECK > I_CS_WIDTH)
-            O_CS_IMEM_PAD <= 1;
-        else 
-            O_CS_IMEM_PAD <= 0;
+//always @(posedge I_CS_HCLK)
+//    if (!I_CS_HRESET_N)
+//        O_CS_IMEM_PAD <= 0;
+//    else 
+//        if (PAD_CHECK > I_CS_WIDTH)
+//            O_CS_IMEM_PAD <= 1;
+//        else 
+//            O_CS_IMEM_PAD <= 0;
 
 always @(*)
     if (curr_state == P_WRITE)

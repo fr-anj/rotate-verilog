@@ -107,14 +107,14 @@ assign O_INTR_DONE = STOP && O_DMA_HBUSREQ;
     .O_CP_PIXEL_IN_ADDRR(PIXEL_IN_ADDRR), //from core pixel
     .O_CP_PIXEL_IN_ADDRG(PIXEL_IN_ADDRG), //from core pixel
     .O_CP_PIXEL_IN_ADDRB(PIXEL_IN_ADDRB), //from core pixel
-    .O_CP_IMEM_PAD(CP_PAD), //to DMA
+    //.O_CP_IMEM_PAD(CP_PAD), //to DMA
     .I_CP_STOP(STOP),
     .I_CP_DMA_READY(DMA_READY), //from DMA
     .I_CP_HEIGHT(IMG_H), //from REGF
     .I_CP_WIDTH(IMG_W), //from REGF
     .I_CP_DEGREES(IMG_MODE), //from REGF
     .I_CP_DIRECTION(IMG_DIR), //from REGF
-    .I_CP_START(START), //from REGF TODO: rename to DMA_READY
+    .I_CP_START(START), //from REGF
     .I_CP_HRESET_N(I_HRESET_N), //module input HARD RESET
     .I_CP_RESET(RESET),
     .I_CP_HCLK(I_HCLK) //module input HCLK
@@ -135,7 +135,7 @@ assign O_INTR_DONE = STOP && O_DMA_HBUSREQ;
     .I_CS_WIDTH(IMG_W), //from REGF
     .I_CS_DEGREES(IMG_MODE), //from REGF
     .I_CS_DIRECTION(IMG_DIR), //from REGF
-    .I_CS_START(START), //from REGF TODO: rename to DMA_READY
+    .I_CS_START(START), //from REGF 
     .I_CS_HRESET_N(I_HRESET_N), //module input HARD RESET
     .I_CS_RESET(RESET),
     .I_CS_HCLK(I_HCLK) //module input HCLK

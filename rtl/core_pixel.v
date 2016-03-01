@@ -4,18 +4,17 @@
 `define pixel_set_width 8
 
 module core_pixel (
-    output [7:0] O_CP_PIXEL_IN_ADDR0,
-    output [7:0] O_CP_PIXEL_IN_ADDR1,
-    output [7:0] O_CP_PIXEL_IN_ADDR2,
-    output [7:0] O_CP_PIXEL_IN_ADDR3,
-    output [7:0] O_CP_PIXEL_OUT_ADDRB,
-    output [7:0] O_CP_PIXEL_OUT_ADDRG,
-    output [7:0] O_CP_PIXEL_OUT_ADDRR,
-    output [7:0] O_CP_PIXEL_OUT_ADDR0,
-     
-    output [7:0] O_CP_PIXEL_OUT_ADDR1,
-    output [7:0] O_CP_PIXEL_OUT_ADDR2,
-    output [7:0] O_CP_PIXEL_OUT_ADDR3,
+    output reg [7:0] O_CP_PIXEL_IN_ADDR0,
+    output reg [7:0] O_CP_PIXEL_IN_ADDR1,
+    output reg [7:0] O_CP_PIXEL_IN_ADDR2,
+    output reg [7:0] O_CP_PIXEL_IN_ADDR3,
+    output reg [7:0] O_CP_PIXEL_OUT_ADDRB,
+    output reg [7:0] O_CP_PIXEL_OUT_ADDRG,
+    output reg [7:0] O_CP_PIXEL_OUT_ADDRR,
+    output reg [7:0] O_CP_PIXEL_OUT_ADDR0, 
+    output reg [7:0] O_CP_PIXEL_OUT_ADDR1,
+    output reg [7:0] O_CP_PIXEL_OUT_ADDR2,
+    output reg [7:0] O_CP_PIXEL_OUT_ADDR3,
     output reg [7:0] O_CP_PIXEL_IN_ADDRR,
     output reg [7:0] O_CP_PIXEL_IN_ADDRG,
     output reg [7:0] O_CP_PIXEL_IN_ADDRB,
@@ -82,8 +81,8 @@ reg [6:0] row_180;
 reg [6:0] row_270; //MAX:56
 
 //column addresses MAX:7
-reg [2:0] col_90;
-reg [2:0] col_270;
+reg [3:0] col_90;
+reg [3:0] col_270;
 
 reg [8:0] PIXEL_IN_ADDR0;
 reg [8:0] PIXEL_IN_ADDR1;
@@ -139,27 +138,27 @@ always @(*)
 	case (I_CP_DEGREES)
 	    P_DEG_0:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_0;
-		    O_CP_PIXEL_OUT_ADDRG = addr_0 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_0 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_0[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_0[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_0[7:0] + 2;
 		end
 	    P_DEG_90:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_90;
-		    O_CP_PIXEL_OUT_ADDRG = addr_90 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_90 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_90[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_90[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_90[7:0] + 2;
 		end
 	    P_DEG_180:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_180;
-		    O_CP_PIXEL_OUT_ADDRG = addr_180 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_180 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_180[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_180[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_180[7:0] + 2;
 		end
 	    P_DEG_270:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_270;
-		    O_CP_PIXEL_OUT_ADDRG = addr_270 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_270 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_270[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_270[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_270[7:0] + 2;
 		end
 	    default:
 		begin
@@ -172,27 +171,27 @@ always @(*)
 	case (I_CP_DEGREES)
 	    P_DEG_0:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_0;
-		    O_CP_PIXEL_OUT_ADDRG = addr_0 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_0 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_0[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_0[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_0[7:0] + 2;
 		end
 	    P_DEG_90:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_270;
-		    O_CP_PIXEL_OUT_ADDRG = addr_270 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_270 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_270[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_270[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_270[7:0] + 2;
 		end
 	    P_DEG_180:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_180;
-		    O_CP_PIXEL_OUT_ADDRG = addr_180 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_180 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_180[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_180[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_180[7:0] + 2;
 		end
 	    P_DEG_270:
 		begin
-		    O_CP_PIXEL_OUT_ADDRR = addr_90;
-		    O_CP_PIXEL_OUT_ADDRG = addr_90 + 1;
-		    O_CP_PIXEL_OUT_ADDRB = addr_90 + 2;
+		    O_CP_PIXEL_OUT_ADDRR = addr_90[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = addr_90[7:0] + 1;
+		    O_CP_PIXEL_OUT_ADDRB = addr_90[7:0] + 2;
 		end
 	    default:
 		begin
@@ -210,7 +209,7 @@ always @(posedge I_CP_HCLK)
 	    if (trans_count == 6'h3f)
 		row_0 <= 7'h00; 
 	    else 
-		row_0 <= row_0[5:0] + 1;
+		row_0 <= row_0[5:0] + 6'h01;
 	else 
 	    row_0 <= row_0;
 
@@ -256,40 +255,40 @@ always @(posedge I_CP_HCLK)
 
 always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
-	col_90 <= 3'h0;
+	col_90 <= 4'h0;
     else
 	if (next_state == P_READ)
 	    if (trans_count == 6'h3f)
-		col_90 <= 7'h00;
+		col_90 <= 4'h0;
 	    else
 		if (beat_count == 3'h7)
-		    col_90 <= col_90[5:0] + 1;
+		    col_90 <= col_90[2:0] + 1;
 	else 
 	    col_90 <= col_90;
 
 always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
-	col_270 <= 3'h0;
+	col_270 <= 4'h0;
     else 
 	case (next_state)
 	    P_READ:
 		if (trans_count == 6'h3f)
-		    col_270 <= 3'h7;
+		    col_270 <= 4'h7;
 		else 
 		    if (beat_count == 3'h7)
-			col_270 <= col_270[5:0] - 1;
+			col_270 <= col_270[2:0] - 1;
 		    else 
 			col_270 <= col_270;
 	    default:
-		col_270 <= 7'h07;
+		col_270 <= 4'h7;
 	endcase
 
 always @(*)
     begin 
 	tmp_addr_0 = {1'b0, row_0[5:0]}; 
-	tmp_addr_90 = row_90[5:0] + col_90[5:0];
+	tmp_addr_90 = row_90[5:0] + col_90[2:0];
 	tmp_addr_180 = {1'b0, row_180[5:0]};
-	tmp_addr_270 = row_270[5:0] + col_270[5:0];
+	tmp_addr_270 = row_270[5:0] + col_270[2:0];
     end
 
 always @(*)	
@@ -342,20 +341,26 @@ always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	trans_count <= 6'h00;
     else 
-        if (I_CP_DMA_READY)
-            trans_count <= trans_count + 1;
-        else
-            trans_count <= trans_count;
+        if (I_CP_STOP)
+	    trans_count <= 6'h00;
+	else
+	    if (I_CP_DMA_READY)
+		trans_count <= trans_count + 1;
+	    else
+		trans_count <= trans_count;
 
 //count to 8
 always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	beat_count <= 3'h0;
     else 
-        if (I_CP_DMA_READY)
-            beat_count <= beat_count + 1;
-        else 
-            beat_count <= beat_count;
+	if (I_CP_STOP)
+	    beat_count <= 6'h00;
+	else 
+	    if (I_CP_DMA_READY)
+		beat_count <= beat_count + 1;
+	    else 
+		beat_count <= beat_count;
 
 //data from AHB to input buffer - input buffer side
 always @(posedge I_CP_HCLK)
