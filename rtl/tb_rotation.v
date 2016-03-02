@@ -1,3 +1,35 @@
+`define no_delay 1
+
+`define assert_hready 1
+`define assert_hreset 1
+`define assert_hgrant 1
+`define deassert_hready 0
+`define deassert_hreset 0
+`define deassert_hgrant 0
+
+`define assert_psel 1
+`define assert_penable 1
+`define deassert_psel 0
+`define deassert_penable 0
+
+`define min_input_image_height 1
+`define min_input_image_width 1
+`define mid_input_image_height 16383
+`define mid_input_image_width 8191
+`define max_input_image_height 32767
+`define max_input_image_width 16383
+
+`define min_output_image_height 8
+`define min_output_image_width 8
+
+`define rotate_0_degrees 0
+`define rotate_90_degrees 1
+`define rotate_180_degrees 2
+`define rotate_270_degrees 3
+
+`define rotate_direction_cw 0
+`define rotate_direction_ccw 1
+
 module tb_rotation ();
     wire [31:0] O_REG_PRDATA;
     wire [31:0] O_DMA_HADDR;
@@ -57,9 +89,6 @@ parameter   p_source = 8'h00, p_destination = 8'h04,
             p_start = 8'h20, p_reset = 8'h24,
             p_intr_mask = 8'h28, p_bef_mask = 8'h2c,
             p_aft_mask = 8'h30, p_intr_clear = 52;
-
-parameter   p_deg_0 = 0, p_deg_90 = 1, p_deg_180 = 2, p_deg_270 = 3;
-parameter   p_ccw = 0, p_cw = 1;
 
 always 
     #1 I_HCLK = ~I_HCLK;
@@ -199,21 +228,225 @@ initial begin
 
     hard_reset();
 
-    //scenario 1000
-    set_image_properties(.height(1), .width(1), .degrees(p_deg_90), .direction(p_cw));
-    write_apb(p_start, 1);
-    write_apb(p_start, 0);
-    read_apb(p_start);
-    @(posedge I_PCLK) I_REG_PENABLE <= 0; //deassert when no other transaction is queued
-    ready_ahb (1, 1);
+    //scenario 1000--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`min_input_image_height), 
+    //    .width(`min_input_image_width), 
+    //    .degrees(`rotate_0_degrees), 
+    //    .direction(`rotate_direction_cw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= 0; 
+    //ready_ahb (1, 1);
 
-    //fork
-    if (O_DMA_HBUSREQ) @(posedge I_HCLK) grant_ahb(1, 1);
+    //scenario 1001--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`min_input_image_height),
+    //    .width(`mid_input_image_width),
+    //    .degrees(`rotate_90_degrees) 
+    //    .direction(`rotate_direction_cw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <=`deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1002--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`min_input_image_height),
+    //    .width(`max_input_image_width),
+    //    .degrees(`rotate_180_degrees) 
+    //    .direction(`rotate_direction_cw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1003--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`max_input_image_height),
+    //    .width(`min_input_image_width),
+    //    .degrees(`rotate_270_degrees) 
+    //    .direction(`rotate_direction_cw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1004--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`max_input_image_height),
+    //    .width(`mid_input_image_width),
+    //    .degrees(`rotate_90_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1005--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`max_input_image_height),
+    //    .width(`max_input_image_width),
+    //    .degrees(`rotate_90_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1006--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`mid_input_image_height),
+    //    .width(`min_input_image_width),
+    //    .degrees(`rotate_90_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1007-------------------------- //TODO: remove scenario 1007
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`max_input_image_height),
+    //    .width(`max_input_image_width),
+    //    .degrees(`rotate_90_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1008--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(`mid_input_image_height),
+    //    .width(`max_input_image_width),
+    //    .degrees(`rotate_0_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1009--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(192),
+    //    .width(`min_output_image_width),
+    //    .degrees(`rotate_0_degrees) 
+    //    .direction(`rotate_direction_cw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1010--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(6144),
+    //    .width(16),
+    //    .degrees(`rotate_90_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1011--------------------------
+    //set_image_properties(
+    //    .height(`max_input_image_height),
+    //    .width(`max_input_image_width),
+    //    .degrees(`rotate_270_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1012--------------------------
+    //set_image_properties(
+    //    .height(`min_input_image_height),
+    //    .width(`min_input_image_width),
+    //    .degrees(`rotate_90_degrees) 
+    //    .direction(`rotate_direction_ccw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //read_apb(p_start);
+    //@(posedge I_PCLK) I_REG_PENABLE <= `deassert_penable;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1013--------------------------
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(1), 
+    //    .width(1), 
+    //    .degrees(`rotate_90_degrees), 
+    //    .direction(`rotate_direction_cw));
+    //write_apb (p_start, 1);
+    //write_apb (p_start, 0);
+    //@(posedge I_HCLK) I_DMA_HGRANT <= `assert_hgrant;
+    //#250;
+    //ready_ahb(`no_delay, `assert_hready);
+
+    //scenario 1014-------------------------- 
+    //---------------------------------------
+    //set_image_properties(
+    //    .height(1), 
+    //    .width(1), 
+    //    .degrees(`rotate_90_degrees), 
+    //    .direction(`rotate_direction_cw));
+    //write_apb (p_start, 1);
+    //write_apb (p_start, 0);
+    //ready_ahb(`no_delay, `assert_hready);
+    //#250;
+    //@(posedge I_HCLK) I_DMA_HGRANT <= `assert_hgrant;
+
+    //scenario 1015--------------------------
+    //---------------------------------------
+    //repeat(5) @(posedge I_PCLK)
+    //begin
+    //    repeat(2)@(posedge I_PCLK);
+    //    I_REG_PWDATA = $random;
+    //    I_REG_PADDR = $random;
+    //end
+    //#100;
+    //I_REG_PSEL <= `assert_psel;
+    //set_image_properties(
+    //    .height(1), 
+    //    .width(1), 
+    //    .degrees(`rotate_90_degrees), 
+    //    .direction(`rotate_direction_cw));
+    //write_apb(p_start, 1);
+    //write_apb(p_start, 0);
+    //ready_ahb(`no_delay, `assert_hready);
+    //@(posedge I_HCLK) I_DMA_HGRANT <= `assert_hgrant;  
+
+    //(O_DMA_HBUSREQ) @(posedge I_HCLK) grant_ahb(1, 1);
 
     $display("================end simulation==================");
     $display("================================================\n");
 
-    #460  
+    #460
 
     $fclose(image);
     $fclose(new_image);
