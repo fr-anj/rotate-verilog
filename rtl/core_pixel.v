@@ -19,17 +19,17 @@
 `define D_CP_DEFAULT_ADDRESS_3 3
 
 module core_pixel (
-    output reg [7:0] O_CP_PIXEL_IN_ADDR0,
-    output reg [7:0] O_CP_PIXEL_IN_ADDR1,
-    output reg [7:0] O_CP_PIXEL_IN_ADDR2,
-    output reg [7:0] O_CP_PIXEL_IN_ADDR3,
+    output [7:0] O_CP_PIXEL_IN_ADDR0,
+    output [7:0] O_CP_PIXEL_IN_ADDR1,
+    output [7:0] O_CP_PIXEL_IN_ADDR2,
+    output [7:0] O_CP_PIXEL_IN_ADDR3,
     output reg [7:0] O_CP_PIXEL_OUT_ADDRB,
     output reg [7:0] O_CP_PIXEL_OUT_ADDRG,
     output reg [7:0] O_CP_PIXEL_OUT_ADDRR,
-    output reg [7:0] O_CP_PIXEL_OUT_ADDR0, 
-    output reg [7:0] O_CP_PIXEL_OUT_ADDR1,
-    output reg [7:0] O_CP_PIXEL_OUT_ADDR2,
-    output reg [7:0] O_CP_PIXEL_OUT_ADDR3,
+    output [7:0] O_CP_PIXEL_OUT_ADDR0, 
+    output [7:0] O_CP_PIXEL_OUT_ADDR1,
+    output [7:0] O_CP_PIXEL_OUT_ADDR2,
+    output [7:0] O_CP_PIXEL_OUT_ADDR3,
     output reg [7:0] O_CP_PIXEL_IN_ADDRR,
     output reg [7:0] O_CP_PIXEL_IN_ADDRG,
     output reg [7:0] O_CP_PIXEL_IN_ADDRB,
@@ -71,6 +71,18 @@ reg [6:0] tmp_addr_0;
 reg [6:0] tmp_addr_90;
 reg [6:0] tmp_addr_180;
 reg [6:0] tmp_addr_270;
+wire [8:0] cat_addr_0_b;
+wire [8:0] cat_addr_0_g;
+wire [8:0] cat_addr_0_r;
+wire [8:0] cat_addr_90_b;
+wire [8:0] cat_addr_90_g;
+wire [8:0] cat_addr_90_r;
+wire [8:0] cat_addr_180_b;
+wire [8:0] cat_addr_180_g;
+wire [8:0] cat_addr_180_r;
+wire [8:0] cat_addr_270_b;
+wire [8:0] cat_addr_270_g;
+wire [8:0] cat_addr_270_r;
 
 //row addresses MAX:63
 reg [6:0] row_0;
@@ -91,71 +103,83 @@ reg [8:0] pixel_out_1;
 reg [8:0] pixel_out_2;
 reg [8:0] pixel_out_3;
 
-reg [8:0] pixel_out_r;
-reg [8:0] pixel_out_g;
-reg [8:0] pixel_out_b;
+//reg [8:0] pixel_out_r;
+//reg [8:0] pixel_out_g;
+//reg [8:0] pixel_out_b;
 
 //wire temp_pad; //TODO: transfer this to core_set
 //assign temp_pad = (I_CP_WIDTH[2:0] == 3'h0)? I_CP_WIDTH[2:0] : (I_CP_WIDTH[2:0] - 1); //TODO: transfer this to core_set
 
-assign O_CP_PIXEL_IN_ADDR0 = pixel_in_0;
-assign O_CP_PIXEL_IN_ADDR1 = pixel_in_1;
-assign O_CP_PIXEL_IN_ADDR2 = pixel_in_2;
-assign O_CP_PIXEL_IN_ADDR3 = pixel_in_3;
-assign O_CP_PIXEL_OUT_ADDR0 = pixel_out_0;
-assign O_CP_PIXEL_OUT_ADDR1 = pixel_out_1;
-assign O_CP_PIXEL_OUT_ADDR2 = pixel_out_2;
-assign O_CP_PIXEL_OUT_ADDR3 = pixel_out_3;
+assign O_CP_PIXEL_IN_ADDR0 = pixel_in_0[7:0];
+assign O_CP_PIXEL_IN_ADDR1 = pixel_in_1[7:0];
+assign O_CP_PIXEL_IN_ADDR2 = pixel_in_2[7:0];
+assign O_CP_PIXEL_IN_ADDR3 = pixel_in_3[7:0];
+assign O_CP_PIXEL_OUT_ADDR0 = pixel_out_0[7:0];
+assign O_CP_PIXEL_OUT_ADDR1 = pixel_out_1[7:0];
+assign O_CP_PIXEL_OUT_ADDR2 = pixel_out_2[7:0];
+assign O_CP_PIXEL_OUT_ADDR3 = pixel_out_3[7:0];
+assign cat_addr_0_b = addr_0[7:0] + `D_CP_DEFAULT_ADDRESS_B;
+assign cat_addr_0_g = addr_0[7:0] + `D_CP_DEFAULT_ADDRESS_G;
+assign cat_addr_0_r = addr_0[7:0] + `D_CP_DEFAULT_ADDRESS_R;
+assign cat_addr_90_b = addr_90[7:0] + `D_CP_DEFAULT_ADDRESS_B;
+assign cat_addr_90_g = addr_90[7:0] + `D_CP_DEFAULT_ADDRESS_G;
+assign cat_addr_90_r = addr_90[7:0] + `D_CP_DEFAULT_ADDRESS_R;
+assign cat_addr_180_b = addr_180[7:0] + `D_CP_DEFAULT_ADDRESS_B;
+assign cat_addr_180_g = addr_180[7:0] + `D_CP_DEFAULT_ADDRESS_G;
+assign cat_addr_180_r = addr_180[7:0] + `D_CP_DEFAULT_ADDRESS_R;
+assign cat_addr_270_b = addr_270[7:0] + `D_CP_DEFAULT_ADDRESS_B;
+assign cat_addr_270_g = addr_270[7:0] + `D_CP_DEFAULT_ADDRESS_G;
+assign cat_addr_270_r = addr_270[7:0] + `D_CP_DEFAULT_ADDRESS_R;
 
 //TODO: run spyglass again after all changes
 
 always @(*)
     begin
-	O_CP_PIXEL_IN_ADDRB = pixel_out_b[7:0];
-	O_CP_PIXEL_IN_ADDRG = pixel_out_g[7:0];
-	O_CP_PIXEL_IN_ADDRR = pixel_out_r[7:0];
+	 O_CP_PIXEL_IN_ADDRB = {1'b0,addr_0};
+	 O_CP_PIXEL_IN_ADDRG = addr_0 + `D_CP_ADDRESS_OFFSET_G;
+	 O_CP_PIXEL_IN_ADDRR = addr_0 + `D_CP_ADDRESS_OFFSET_R;
     end
 
-always @(posedge I_CP_HCLK)
-    if (!I_CP_HRESET_N)
-	begin
-	    pixel_out_b <= `D_CP_DEFAULT_ADDRESS_B;
-	    pixel_out_g <= `D_CP_DEFAULT_ADDRESS_G;
-	    pixel_out_r <= `D_CP_DEFAULT_ADDRESS_R;
-	end
-    else 
-	begin 
-	    pixel_out_b <= {1'b0,addr_0};
-	    pixel_out_g <= addr_2 + `D_CP_ADDRESS_OFFSET_G;
-	    pixel_out_r <= addr_0 + `D_CP_ADDRESS_OFFSET_R;
-	end
+//always @(posedge I_CP_HCLK)
+//    if (!I_CP_HRESET_N)
+//	begin
+//	    pixel_out_b <= `D_CP_DEFAULT_ADDRESS_B;
+//	    pixel_out_g <= `D_CP_DEFAULT_ADDRESS_G;
+//	    pixel_out_r <= `D_CP_DEFAULT_ADDRESS_R;
+//	end
+//    else 
+//	begin 
+//	    pixel_out_b <= {1'b0,addr_0};
+//	    pixel_out_g <= addr_0 + `D_CP_ADDRESS_OFFSET_G;
+//	    pixel_out_r <= addr_0 + `D_CP_ADDRESS_OFFSET_R;
+//	end
 
 always @(*)
     if (I_CP_DIRECTION)
 	case (I_CP_DEGREES)
 	    P_DEG_0:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_0[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_0[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_0[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_0_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_0_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_0_r[7:0];
 		end
 	    P_DEG_90:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_90[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_90[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_90[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_90_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_90_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_90_r[7:0];
 		end
 	    P_DEG_180:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_180[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_180[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_180[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_180_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_180_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_180_r[7:0];
 		end
 	    P_DEG_270:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_270[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_270[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_270[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_270_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_270_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_270_r[7:0];
 		end
 	    default:
 		begin
@@ -168,27 +192,27 @@ always @(*)
 	case (I_CP_DEGREES)
 	    P_DEG_0:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_0[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_0[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_0[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_0_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_0_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_0_r[7:0];
 		end
 	    P_DEG_90:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_270[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_270[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_270[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_270_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_270_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_270_r[7:0];
 		end
 	    P_DEG_180:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_180[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_180[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_180[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_180_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_180_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_180_r[7:0];
 		end
 	    P_DEG_270:
 		begin
-		    O_CP_PIXEL_OUT_ADDRB = addr_90[7:0] + `D_CP_ADDRESS_OFFSET_B;
-		    O_CP_PIXEL_OUT_ADDRG = addr_90[7:0] + `D_CP_ADDRESS_OFFSET_G;
-		    O_CP_PIXEL_OUT_ADDRR = addr_90[7:0] + `D_CP_ADDRESS_OFFSET_R;
+		    O_CP_PIXEL_OUT_ADDRB = cat_addr_90_b[7:0];
+		    O_CP_PIXEL_OUT_ADDRG = cat_addr_90_g[7:0];
+		    O_CP_PIXEL_OUT_ADDRR = cat_addr_90_r[7:0];
 		end
 	    default:
 		begin
@@ -260,6 +284,8 @@ always @(posedge I_CP_HCLK)
 	    else
 		if (beat_count == 3'h7)
 		    col_90 <= col_90[2:0] + `D_CP_PIXEL_SIZE;
+		else 
+		    col_90 <= col_90;
 	else 
 	    col_90 <= col_90;
 
@@ -283,18 +309,26 @@ always @(posedge I_CP_HCLK)
 always @(*)
     begin 
 	tmp_addr_0 = {1'b0, row_0[5:0]}; 
-	tmp_addr_90 = row_90[5:0] + col_90[2:0];
+	tmp_addr_90 = row_90[5:0] + {3'b000, col_90[2:0]};
 	tmp_addr_180 = {1'b0, row_180[5:0]};
-	tmp_addr_270 = row_270[5:0] + col_270[2:0];
+	tmp_addr_270 = row_270[5:0] + {3'b000, col_270[2:0]};
     end
 
 always @(*)	
-    begin
-	addr_0 = (tmp_addr_0[5:0] << 1) + tmp_addr_0[5:0];
-	addr_90 = (tmp_addr_90[5:0] << 1) + tmp_addr_90[5:0];
-	addr_180 = (tmp_addr_180[5:0] << 1) + tmp_addr_180[5:0];
-	addr_270 = (tmp_addr_270[5:0] << 1) + tmp_addr_270[5:0];
-    end
+    if (I_CP_STOP)
+	begin
+	    addr_0 = 9'h000;
+	    addr_90 = 9'h000;
+	    addr_180 = 9'h000;
+	    addr_270 = 9'h000;
+	end
+    else
+	begin
+	    addr_0 = (tmp_addr_0[5:0] << 1) + tmp_addr_0[5:0];
+	    addr_90 = (tmp_addr_90[5:0] << 1) + tmp_addr_90[5:0];
+	    addr_180 = (tmp_addr_180[5:0] << 1) + tmp_addr_180[5:0];
+	    addr_270 = (tmp_addr_270[5:0] << 1) + tmp_addr_270[5:0];
+	end
 //always @(*) //TODO: tranfer this to core_set
 //    if (beat_count > temp_pad) //not divisible by 8
 //	O_CP_IMEM_PAD = 1;
@@ -369,93 +403,109 @@ always @(posedge I_CP_HCLK)
 	    pixel_in_3 <= `D_CP_DEFAULT_ADDRESS_3;
 	end
     else 
-	case (next_state)
-	    P_STATE_IDLE:	
-		begin
-		    pixel_in_0 <= `D_CP_DEFAULT_ADDRESS_0;
-		    pixel_in_1 <= `D_CP_DEFAULT_ADDRESS_1;
-		    pixel_in_2 <= `D_CP_DEFAULT_ADDRESS_2;
-		    pixel_in_3 <= `D_CP_DEFAULT_ADDRESS_3;
-		end
-	    P_STATE_READ:
-		if (trans_count == 8'h3f)
+	if (I_CP_STOP)
+	    begin 
+		pixel_in_0 <= 9'h000;
+		pixel_in_1 <= 9'h000;
+		pixel_in_2 <= 9'h000;
+		pixel_in_3 <= 9'h000;
+	    end
+	else
+	    case (next_state)
+		P_STATE_IDLE:	
 		    begin
 			pixel_in_0 <= `D_CP_DEFAULT_ADDRESS_0;
 			pixel_in_1 <= `D_CP_DEFAULT_ADDRESS_1;
 			pixel_in_2 <= `D_CP_DEFAULT_ADDRESS_2;
 			pixel_in_3 <= `D_CP_DEFAULT_ADDRESS_3;
 		    end
-		else
-                    if ((beat_count != 3'h5) && (beat_count != 3'h6))
-                        begin
-                            pixel_in_0 <= pixel_in_0[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                            pixel_in_1 <= pixel_in_1[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                            pixel_in_2 <= pixel_in_2[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                            pixel_in_3 <= pixel_in_3[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                        end
-                    else 
-                        begin
-                            pixel_in_0 <= pixel_in_0;
-                            pixel_in_1 <= pixel_in_1;
-                            pixel_in_2 <= pixel_in_2;
-                            pixel_in_3 <= pixel_in_3;
-                        end
-            default:
-                begin
-		    pixel_in_0 <= `D_CP_DEFAULT_ADDRESS_0;
-		    pixel_in_1 <= `D_CP_DEFAULT_ADDRESS_1;
-		    pixel_in_2 <= `D_CP_DEFAULT_ADDRESS_2;
-		    pixel_in_3 <= `D_CP_DEFAULT_ADDRESS_3;
-                end
-        endcase
+		P_STATE_READ:
+		    if (trans_count == 8'h3f)
+			begin
+			    pixel_in_0 <= `D_CP_DEFAULT_ADDRESS_0;
+			    pixel_in_1 <= `D_CP_DEFAULT_ADDRESS_1;
+			    pixel_in_2 <= `D_CP_DEFAULT_ADDRESS_2;
+			    pixel_in_3 <= `D_CP_DEFAULT_ADDRESS_3;
+			end
+		    else
+			if ((beat_count != 3'h5) && (beat_count != 3'h6))
+			    begin
+				pixel_in_0 <= pixel_in_0[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+				pixel_in_1 <= pixel_in_1[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+				pixel_in_2 <= pixel_in_2[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+				pixel_in_3 <= pixel_in_3[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+			    end
+			else 
+			    begin
+				pixel_in_0 <= pixel_in_0;
+				pixel_in_1 <= pixel_in_1;
+				pixel_in_2 <= pixel_in_2;
+				pixel_in_3 <= pixel_in_3;
+			    end
+		default:
+		    begin
+			pixel_in_0 <= `D_CP_DEFAULT_ADDRESS_0;
+			pixel_in_1 <= `D_CP_DEFAULT_ADDRESS_1;
+			pixel_in_2 <= `D_CP_DEFAULT_ADDRESS_2;
+			pixel_in_3 <= `D_CP_DEFAULT_ADDRESS_3;
+		    end
+	    endcase
                 
 always @(posedge I_CP_HCLK)
     if (!I_CP_HRESET_N)
 	begin
-	    pixel_out_0 <= `D_DEFAULT_ADDRESS_0;
-	    pixel_out_1 <= `D_DEFAULT_ADDRESS_1;
-	    pixel_out_2 <= `D_DEFAULT_ADDRESS_2;
-	    pixel_out_3 <= `D_DEFAULT_ADDRESS_3;
+	    pixel_out_0 <= `D_CP_DEFAULT_ADDRESS_0;
+	    pixel_out_1 <= `D_CP_DEFAULT_ADDRESS_1;
+	    pixel_out_2 <= `D_CP_DEFAULT_ADDRESS_2;
+	    pixel_out_3 <= `D_CP_DEFAULT_ADDRESS_3;
 	end
     else 
-	case (next_state)
-	    P_STATE_IDLE:
-		begin
-		    pixel_out_0 <= `D_DEFAULT_ADDRESS_0;
-		    pixel_out_1 <= `D_DEFAULT_ADDRESS_1;
-		    pixel_out_2 <= `D_DEFAULT_ADDRESS_2;
-		    pixel_out_3 <= `D_DEFAULT_ADDRESS_3;
-		end
-	    P_STATE_WRITE:
-                if (trans_count == 6'h3f)
-                    begin
-                        pixel_out_0 <= `D_DEFAULT_ADDRESS_0;
-                        pixel_out_1 <= `D_DEFAULT_ADDRESS_1;
-                        pixel_out_2 <= `D_DEFAULT_ADDRESS_2;
-                        pixel_out_3 <= `D_DEFAULT_ADDRESS_3;
-                    end
-                else
-                    if ((beat_count != 3'h5) && (beat_count != 3'h6))
-                        begin
-                            pixel_out_0 <= pixel_out_0[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                            pixel_out_1 <= pixel_out_1[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                            pixel_out_2 <= pixel_out_2[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                            pixel_out_3 <= pixel_out_3[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
-                        end
-                    else 
-                        begin
-                            pixel_out_0 <= pixel_out_0;
-                            pixel_out_1 <= pixel_out_1;
-                            pixel_out_2 <= pixel_out_2;
-                            pixel_out_3 <= pixel_out_3;
-                        end
-            default:
-                begin
-                    pixel_out_0 <= `D_DEFAULT_ADDRESS_0;
-                    pixel_out_1 <= `D_DEFAULT_ADDRESS_1;
-                    pixel_out_2 <= `D_DEFAULT_ADDRESS_2;
-                    pixel_out_3 <= `D_DEFAULT_ADDRESS_3;
-                end
-	endcase
+	if (I_CP_STOP)
+	    begin 
+		pixel_out_0 <= 9'h000;
+		pixel_out_1 <= 9'h000;
+		pixel_out_2 <= 9'h000;
+		pixel_out_3 <= 9'h000;
+	    end
+	else
+	    case (next_state)
+		P_STATE_IDLE:
+		    begin
+			pixel_out_0 <= `D_CP_DEFAULT_ADDRESS_0;
+			pixel_out_1 <= `D_CP_DEFAULT_ADDRESS_1;
+			pixel_out_2 <= `D_CP_DEFAULT_ADDRESS_2;
+			pixel_out_3 <= `D_CP_DEFAULT_ADDRESS_3;
+		    end
+		P_STATE_WRITE:
+		    if (trans_count == 6'h3f)
+			begin
+			    pixel_out_0 <= `D_CP_DEFAULT_ADDRESS_0;
+			    pixel_out_1 <= `D_CP_DEFAULT_ADDRESS_1;
+			    pixel_out_2 <= `D_CP_DEFAULT_ADDRESS_2;
+			    pixel_out_3 <= `D_CP_DEFAULT_ADDRESS_3;
+			end
+		    else
+			if ((beat_count != 3'h5) && (beat_count != 3'h6))
+			    begin
+				pixel_out_0 <= pixel_out_0[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+				pixel_out_1 <= pixel_out_1[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+				pixel_out_2 <= pixel_out_2[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+				pixel_out_3 <= pixel_out_3[7:0] + `D_CP_ADDRESS_OFFSET_AHB;
+			    end
+			else 
+			    begin
+				pixel_out_0 <= pixel_out_0;
+				pixel_out_1 <= pixel_out_1;
+				pixel_out_2 <= pixel_out_2;
+				pixel_out_3 <= pixel_out_3;
+			    end
+		default:
+		    begin
+			pixel_out_0 <= `D_CP_DEFAULT_ADDRESS_0;
+			pixel_out_1 <= `D_CP_DEFAULT_ADDRESS_1;
+			pixel_out_2 <= `D_CP_DEFAULT_ADDRESS_2;
+			pixel_out_3 <= `D_CP_DEFAULT_ADDRESS_3;
+		    end
+	    endcase
 
 endmodule

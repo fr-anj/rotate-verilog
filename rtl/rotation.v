@@ -68,13 +68,11 @@ wire WRITE;
 wire CS_PAD;
 wire CP_PAD;
 
-assign O_INTR_DONE = STOP && O_DMA_HBUSREQ; 
-
     apbif REGISTER_FILE (
     .O_APBIF_PRDATA(O_REG_PRDATA), //module output
     .O_APBIF_PREADY(O_REG_PREADY), //module output 
     .O_APBIF_DMA_SRC_IMG(SRC_IMG), //to dma
-    .O_APBIF_DMA_DST_IMG(DST_IMG), //to dma
+    //.O_APBIF_DMA_DST_IMG(DST_IMG), //to dma
     .O_APBIF_ROT_IMG_H(IMG_H), //to core set 
     .O_APBIF_ROT_IMG_W(IMG_W), //to core set 
     .O_APBIF_ROT_IMG_MODE(IMG_MODE), //to core set and core pixel
@@ -83,6 +81,7 @@ assign O_INTR_DONE = STOP && O_DMA_HBUSREQ;
     .O_APBIF_CTRL_RESET(RESET), //SOFT RESET
     .I_APBIF_PADDR(I_REG_PADDR), //module input 
     .I_APBIF_PWDATA(I_REG_PWDATA), //module input 
+    .I_APBIF_DMA_DST_IMG(DST_IMG),
     .I_APBIF_ROT_IMG_NEW_H(IMG_NEW_H), //from core set
     .I_APBIF_ROT_IMG_NEW_W(IMG_NEW_W), //from core set
     .I_APBIF_PSEL(I_REG_PSEL), //module input 
@@ -108,7 +107,7 @@ assign O_INTR_DONE = STOP && O_DMA_HBUSREQ;
     .O_CP_PIXEL_IN_ADDRG(PIXEL_IN_ADDRG), //from core pixel
     .O_CP_PIXEL_IN_ADDRB(PIXEL_IN_ADDRB), //from core pixel
     //.O_CP_IMEM_PAD(CP_PAD), //to DMA
-    .I_CP_STOP(STOP),
+    .I_CP_STOP(O_INTR_DONE),
     .I_CP_DMA_READY(DMA_READY), //from DMA
     .I_CP_HEIGHT(IMG_H), //from REGF
     .I_CP_WIDTH(IMG_W), //from REGF
@@ -128,8 +127,9 @@ assign O_INTR_DONE = STOP && O_DMA_HBUSREQ;
     .O_CS_NEW_H(IMG_NEW_H), //to REGF
     .O_CS_NEW_W(IMG_NEW_W), //to REGF
     .O_CS_IMEM_PAD(CS_PAD), 
+    .O_CS_INTR_DONE(O_INTR_DONE),
     .O_CS_DST_IMG(DST_IMG),
-    .O_CS_STOP(STOP),
+    //.O_CS_STOP(STOP),
     .I_CS_DMA_READY(DMA_READY), //from DMA
     .I_CS_HEIGHT(IMG_H), //from REGF
     .I_CS_WIDTH(IMG_W), //from REGF
@@ -150,8 +150,8 @@ assign O_INTR_DONE = STOP && O_DMA_HBUSREQ;
     .O_DMA_HBUSREQ(O_DMA_HBUSREQ), //module output
     .O_DMA_HWRITE(O_DMA_HWRITE), //module output
     .O_DMA_READY(DMA_READY), //to core
-    .I_DMA_STOP(STOP),
-    .I_DMA_CP_IMEM_PAD(CP_PAD), 
+    .I_DMA_STOP(O_INTR_DONE),
+    //.I_DMA_CP_IMEM_PAD(CP_PAD), 
     .I_DMA_CS_IMEM_PAD(CS_PAD), 
     .I_DMA_ADDR(ADDR), //from core set
     .I_DMA_HRDATA(I_DMA_HRDATA), // module input 

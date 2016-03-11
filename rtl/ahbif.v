@@ -9,7 +9,7 @@ module ahbif (
 	output reg O_AHBIF_HBUSREQ, //to arbiter
     	output O_AHBIF_HWRITE, //to slave 
         output O_AHBIF_READY, //to core
-        output O_AHBIF_BUFF_WRITE,
+        //output O_AHBIF_BUFF_WRITE,
 
 	input [31:0] I_AHBIF_HRDATA, //from slave
 	input [31:0] I_AHBIF_ADDR, //from core
@@ -33,10 +33,11 @@ reg [2:0] burst_type;
 
 reg [32:0] address;
 reg [31:0] new_addr;
+reg [32:0] tmp_addr;
 reg [31:0] data;
 reg [31:0] addr_check;
 reg READY;
-reg BUFF_WRITE;
+//reg BUFF_WRITE;
 
 wire LAST, LIMIT;
 
@@ -68,18 +69,23 @@ parameter 	p_s_idle = 3'b000,
 		p_s_busy = 3'b100,
 		p_s_finish = 3'b101;
 
-always @(*)
-    if (!I_AHBIF_WRITE)
-	case (curr_state)
-	    p_s_seq:
-		BUFF_WRITE = 1;
-	    p_s_idle:
-		BUFF_WRITE = 0;
-	    default:
-		BUFF_WRITE = BUFF_WRITE;
-	endcase
-    else 
-	BUFF_WRITE = 0;
+//always @(*)
+//    if (I_AHBIF_STOP)
+//	BUFF_WRITE = 0;
+//    else
+//	if (!I_AHBIF_WRITE)
+//	    case (curr_state)
+//		p_s_idle:
+//		    BUFF_WRITE = 0;
+//		p_s_nseq:
+//		    BUFF_WRITE = 1;
+//		p_s_seq:
+//		    BUFF_WRITE = 1;
+//		default:
+//		    BUFF_WRITE = 0;
+//	    endcase
+//	else 
+//	    BUFF_WRITE = 0;
 
 //ready signal to core
 always @(posedge I_AHBIF_HCLK)
@@ -156,60 +162,68 @@ always @(*)
 
 //address output 
 always @(*)
-    O_AHBIF_HADDR = new_addr;
+    if (I_AHBIF_STOP)
+	O_AHBIF_HADDR = 32'h0000_0000;
+    else 
+	    O_AHBIF_HADDR = tmp_addr[31:0];
+
+always @(*)
+    tmp_addr = new_addr + address[31:0];
 
 //address alignment
 always @(*)
-        case (I_AHBIF_SIZE)
-                P_B16:
-                        if (I_AHBIF_ADDR[0] != 1'b0)
-                                address = I_AHBIF_ADDR + 32'h00000001;
-                        else 
-                                address = I_AHBIF_ADDR;
-                P_B32:
+        //case (I_AHBIF_SIZE)
+        //        P_B16:
+        //                if (I_AHBIF_ADDR[0] != 1'b0)
+        //                        address = I_AHBIF_ADDR + 32'h00000001;
+        //                else 
+        //                        address = I_AHBIF_ADDR;
+        //        P_B32:
                         if (I_AHBIF_ADDR[1:0] != 2'b00)
                                 address = I_AHBIF_ADDR + {29'h00000000,(3'h4 - {1'b0,temp})};
                         else 
                                 address = I_AHBIF_ADDR;
-                default:
-                        address = I_AHBIF_ADDR;
-        endcase
+        //        default:
+        //                address = I_AHBIF_ADDR;
+        //endcase
 
 //address calculation
 always @(posedge I_AHBIF_HCLK)
 	if (!I_AHBIF_HRESET_N)
 		new_addr <= 32'h00000000;
 	else 
-		if (next_state == p_s_seq || (next_state == p_s_nseq && LIMIT))
-			case (I_AHBIF_SIZE)
-				P_B16: 	
-					new_addr <= new_addr + 2;
-				P_B32:
-					new_addr <= new_addr + 4;
-				default:
-					new_addr <= new_addr + 1;
-			endcase
+		if ((next_state == p_s_seq) || ((next_state == p_s_nseq) && LIMIT))
+		//	case (I_AHBIF_SIZE)
+		//		P_B16: 	
+		//			new_addr <= new_addr + 2;
+		//		P_B32:
+		//			new_addr <= new_addr + 4;
+		//		default:
+		//			new_addr <= new_addr + 1;
+		//	endcase
+		    new_addr <= new_addr + 4;
 		else if (next_state == p_s_nseq)
-			new_addr <= address[31:0];
+			new_addr <= 32'h0000_0000;
 		else if (next_state == p_s_busy)
 			new_addr <= new_addr;
 		else 
-			new_addr <= 32'h00000000;
+			new_addr <= new_addr;
 
 //address check look ahead
 always @(*)
 	if (!I_AHBIF_HRESET_N)
 		addr_check = 32'h00000000;
 	else 
-                case (I_AHBIF_SIZE)
-                        //P_B8:
-                        P_B16:
-                                addr_check = new_addr + p_check2;
-                        P_B32:
-                                addr_check = new_addr + p_check4;
-                        default:
-                                addr_check = new_addr + p_check1;
-                endcase 
+                //case (I_AHBIF_SIZE)
+                //        //P_B8:
+                //        P_B16:
+                //                addr_check = new_addr + p_check2;
+                //        P_B32:
+                //                addr_check = new_addr + p_check4;
+                //        default:
+                //                addr_check = new_addr + p_check1;
+                //endcase 
+		addr_check = new_addr + p_check4;
 
 //write data output 
 always @(posedge I_AHBIF_HCLK)
@@ -217,7 +231,7 @@ always @(posedge I_AHBIF_HCLK)
 		O_AHBIF_HWDATA <= 32'h00000000;
 	else 
 		if (I_AHBIF_WRITE)
-			if ((next_state == p_s_seq) || (next_state == p_s_finish) || (next_state == p_s_nseq && LIMIT))
+			if (((next_state == p_s_seq) || (next_state == p_s_finish)) || ((next_state == p_s_nseq) && LIMIT))
 				O_AHBIF_HWDATA <= data;
 			else if (next_state == p_s_busy)
 				O_AHBIF_HWDATA <= O_AHBIF_HWDATA;
@@ -232,19 +246,23 @@ always @(*)
 		data = 32'h00000000;
 	else 
 		if (I_AHBIF_WRITE && (curr_state != p_s_busreq))
-			case (I_AHBIF_SIZE)
-				P_B16:
-					data = {I_AHBIF_WDATA[15:0],I_AHBIF_WDATA[15:0]};				
-				P_B32:
-					data = I_AHBIF_WDATA;
-				default:
-					data = {I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0]};	
-			endcase
+		    data = I_AHBIF_WDATA;
+			//case (I_AHBIF_SIZE)
+			//	P_B16:
+			//		data = {I_AHBIF_WDATA[15:0],I_AHBIF_WDATA[15:0]};				
+			//	P_B32:
+			//		data = I_AHBIF_WDATA;
+			//	default:
+			//		data = {I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0]};	
+			//endcase
 		else 
 			data = 32'h00000000;
 
 //output transfer type
 always @(*)
+    if (I_AHBIF_STOP)
+	O_AHBIF_HTRANS = 3'h0;
+    else
 	O_AHBIF_HTRANS = transfer_type;
 
 //process transfer type
@@ -297,7 +315,7 @@ always @(posedge I_AHBIF_HCLK)
 		if (next_state == p_s_idle)
 			O_AHBIF_HSIZE <= 2'b00;
 		else 
-			if (I_AHBIF_SIZE == P_B8 || I_AHBIF_SIZE == P_B16 || I_AHBIF_SIZE == P_B32)
+			if ((I_AHBIF_SIZE == P_B8 || (I_AHBIF_SIZE == P_B16)) || (I_AHBIF_SIZE == P_B32))
 				O_AHBIF_HSIZE <= I_AHBIF_SIZE;
 			else 
 				O_AHBIF_HSIZE <= P_B32;
@@ -322,7 +340,7 @@ always @(posedge I_AHBIF_HCLK)
 	else 
 		if (next_state == p_s_busy)
 			transfer_count <= transfer_count;
-		else if (next_state == p_s_seq || (next_state == p_s_nseq && LIMIT))
+		else if ((next_state == p_s_seq) || ((next_state == p_s_nseq) && LIMIT))
 			transfer_count <= transfer_count + 4'h1;
 		else 
 			transfer_count <= 4'h0;
@@ -332,6 +350,6 @@ assign LAST = ({1'b0,transfer_count} < (I_AHBIF_COUNT - 1))? 0 : 1;
 assign LIMIT = (addr_check[11:0] == 11'h400)? 1 : 0;
 assign O_AHBIF_HWRITE = I_AHBIF_WRITE;
 assign O_AHBIF_READY = READY;
-assign O_AHBIF_BUFF_WRITE = BUFF_WRITE;
+//assign O_AHBIF_BUFF_WRITE = BUFF_WRITE;
 
 endmodule

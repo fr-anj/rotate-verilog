@@ -303,7 +303,7 @@ image *rotate_image (image *img, int deg, int dir)
     g_infoheader.height = new_height;
     g_infoheader.width = new_width;
 
-    image_size = new_height * new_width;
+    image_size = g_infoheader.image_size;
 
     new_image = malloc(sizeof(image));
     new_image->r = malloc(sizeof(unsigned char) * image_size);

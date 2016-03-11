@@ -45,58 +45,58 @@ always @(posedge I_IMEM_HCLK)
 
 //read data form the input buffer
 //data forward the input data
-always @(posedge I_IMEM_HCLK)
+always @(*)
     if (!I_IMEM_HRESET_N)
-	O_IMEM_PIXEL_B <= 8'h00;
+	O_IMEM_PIXEL_B = 8'h00;
     else 
         if (I_IMEM_PAD)
-            O_IMEM_PIXEL_B <= 8'h00; //fill with black as padding
+            O_IMEM_PIXEL_B = 8'h00; //fill with black as padding
         else 
 	    if (I_IMEM_PIXEL_OUT_ADDRB == I_IMEM_PIXEL_IN_ADDR0)
-		O_IMEM_PIXEL_B <= I_IMEM_RDATA[7:0];
+		O_IMEM_PIXEL_B = I_IMEM_RDATA[7:0];
 	    else if (I_IMEM_PIXEL_OUT_ADDRB == I_IMEM_PIXEL_IN_ADDR1)
-		O_IMEM_PIXEL_B <= I_IMEM_RDATA[15:8];
+		O_IMEM_PIXEL_B = I_IMEM_RDATA[15:8];
 	    else if (I_IMEM_PIXEL_OUT_ADDRB == I_IMEM_PIXEL_IN_ADDR2)
-		O_IMEM_PIXEL_B <= I_IMEM_RDATA[23:16];
+		O_IMEM_PIXEL_B = I_IMEM_RDATA[23:16];
 	    else if (I_IMEM_PIXEL_OUT_ADDRB ==  I_IMEM_PIXEL_IN_ADDR3)
-		O_IMEM_PIXEL_B <= I_IMEM_RDATA[31:24];
+		O_IMEM_PIXEL_B = I_IMEM_RDATA[31:24];
 	    else 
-		O_IMEM_PIXEL_B <= memory[I_IMEM_PIXEL_OUT_ADDRB];
+		O_IMEM_PIXEL_B = memory[I_IMEM_PIXEL_OUT_ADDRB];
 
-always @(posedge I_IMEM_HCLK)
+always @(*)
     if (!I_IMEM_HRESET_N)
-	O_IMEM_PIXEL_G <= 8'h00;
+	O_IMEM_PIXEL_G = 8'h00;
     else 
         if (I_IMEM_PAD)
-            O_IMEM_PIXEL_G <= 8'h00; //fill with black as padding
+            O_IMEM_PIXEL_G = 8'h00; //fill with black as padding
         else 
 	    if (I_IMEM_PIXEL_OUT_ADDRG == I_IMEM_PIXEL_IN_ADDR0)
-		O_IMEM_PIXEL_G <= I_IMEM_RDATA[7:0];
+		O_IMEM_PIXEL_G = I_IMEM_RDATA[7:0];
 	    else if (I_IMEM_PIXEL_OUT_ADDRG == I_IMEM_PIXEL_IN_ADDR1)
-		O_IMEM_PIXEL_G <= I_IMEM_RDATA[15:8];
+		O_IMEM_PIXEL_G = I_IMEM_RDATA[15:8];
 	    else if (I_IMEM_PIXEL_OUT_ADDRG == I_IMEM_PIXEL_IN_ADDR2)
-		O_IMEM_PIXEL_G <= I_IMEM_RDATA[23:16];
+		O_IMEM_PIXEL_G = I_IMEM_RDATA[23:16];
 	    else if (I_IMEM_PIXEL_OUT_ADDRG ==  I_IMEM_PIXEL_IN_ADDR3)
-		O_IMEM_PIXEL_G <= I_IMEM_RDATA[31:24];
+		O_IMEM_PIXEL_G = I_IMEM_RDATA[31:24];
 	    else 
-		O_IMEM_PIXEL_G <= memory[I_IMEM_PIXEL_OUT_ADDRG];
+		O_IMEM_PIXEL_G = memory[I_IMEM_PIXEL_OUT_ADDRG];
 
-always @(posedge I_IMEM_HCLK)
+always @(*)
     if (!I_IMEM_HRESET_N)
-	O_IMEM_PIXEL_R <= 8'h00;
+	O_IMEM_PIXEL_R = 8'h00;
     else 
         if (I_IMEM_PAD)
-            O_IMEM_PIXEL_R <= 8'h00; //fill with black as padding
+            O_IMEM_PIXEL_R = 8'h00; //fill with black as padding
         else 
             if (I_IMEM_PIXEL_OUT_ADDRR == I_IMEM_PIXEL_IN_ADDR0)
-                O_IMEM_PIXEL_R <= I_IMEM_RDATA[7:0];
+                O_IMEM_PIXEL_R = I_IMEM_RDATA[7:0];
             else if (I_IMEM_PIXEL_OUT_ADDRR == I_IMEM_PIXEL_IN_ADDR1)
-                O_IMEM_PIXEL_R <= I_IMEM_RDATA[15:8];
+                O_IMEM_PIXEL_R = I_IMEM_RDATA[15:8];
             else if (I_IMEM_PIXEL_OUT_ADDRR == I_IMEM_PIXEL_IN_ADDR2)
-                O_IMEM_PIXEL_R <= I_IMEM_RDATA[23:16];
+                O_IMEM_PIXEL_R = I_IMEM_RDATA[23:16];
             else if (I_IMEM_PIXEL_OUT_ADDRR ==  I_IMEM_PIXEL_IN_ADDR3)
-                O_IMEM_PIXEL_R <= I_IMEM_RDATA[31:24];
+                O_IMEM_PIXEL_R = I_IMEM_RDATA[31:24];
             else 
-                O_IMEM_PIXEL_R <= memory[I_IMEM_PIXEL_OUT_ADDRR];
+                O_IMEM_PIXEL_R = memory[I_IMEM_PIXEL_OUT_ADDRR];
 
 endmodule
