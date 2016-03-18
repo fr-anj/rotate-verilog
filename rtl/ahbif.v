@@ -226,26 +226,23 @@ always @(*)
 		addr_check = new_addr + p_check4;
 
 //write data output 
-always @(posedge I_AHBIF_HCLK)
-	if (!I_AHBIF_HRESET_N)
-		O_AHBIF_HWDATA <= 32'h00000000;
-	else 
-		if (I_AHBIF_WRITE)
-			if (((next_state == p_s_seq) || (next_state == p_s_finish)) || ((next_state == p_s_nseq) && LIMIT))
-				O_AHBIF_HWDATA <= data;
-			else if (next_state == p_s_busy)
-				O_AHBIF_HWDATA <= O_AHBIF_HWDATA;
-			else 
-				O_AHBIF_HWDATA <= 32'h00000000;
-		else 
-			O_AHBIF_HWDATA <= 32'h00000000;
+always @(*)
+//		if (I_AHBIF_WRITE)
+//			if (((next_state == p_s_seq) || (next_state == p_s_finish)) || ((next_state == p_s_nseq) && LIMIT))
+				O_AHBIF_HWDATA = data;
+//			else if (next_state == p_s_busy)
+//				O_AHBIF_HWDATA <= O_AHBIF_HWDATA;
+//			else 
+//				O_AHBIF_HWDATA <= 32'h00000000;
+//		else 
+//			O_AHBIF_HWDATA <= 32'h00000000;
 
 //write data process 
 always @(*)
 	if (!I_AHBIF_HRESET_N)
 		data = 32'h00000000;
 	else 
-		if (I_AHBIF_WRITE && (curr_state != p_s_busreq))
+//		if (I_AHBIF_WRITE && (curr_state != p_s_busreq))
 		    data = I_AHBIF_WDATA;
 			//case (I_AHBIF_SIZE)
 			//	P_B16:
@@ -255,8 +252,8 @@ always @(*)
 			//	default:
 			//		data = {I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0],I_AHBIF_WDATA[7:0]};	
 			//endcase
-		else 
-			data = 32'h00000000;
+//		else 
+//			data = 32'h00000000;
 
 //output transfer type
 always @(*)

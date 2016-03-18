@@ -18,7 +18,12 @@ module core_set (
     input I_CS_START,
     input I_CS_HRESET_N,
     input I_CS_RESET,
-    input I_CS_HCLK
+    input I_CS_HCLK,
+
+    //interrupt registers
+    input I_CS_INTR_MASK,
+    output O_CS_BEF_MASK,
+    output O_CS_AFT_MASK
 );
 
 wire [13:0] height_div_by_8;
@@ -34,11 +39,23 @@ wire is_last_height_and_width;
 wire pad_signal_to_dma;
 wire ahb_htrans_idle;
 
-wire [17:0] height_mul_4;
-wire [17:0] width_mul_4;
-wire [20:0] dec_row_address_90;
-wire [20:0] dec_row_address_180;
-wire [20:0] inc_row_address_270;
+wire [17:0] height_mul_3;
+wire [17:0] height_mask_3;
+wire [17:0] height_mask_7;
+wire [2:0] height_diff_4;
+wire [3:0] height_diff_8;
+wire [18:0] height_read_correct;
+wire [18:0] height_write_correct;
+wire [17:0] width_mul_3;
+wire [17:0] width_mask_3;
+wire [17:0] width_mask_7;
+wire [2:0] width_diff_4;
+wire [3:0] width_diff_8;
+wire [18:0] width_read_correct;
+wire [18:0] width_write_correct;
+wire [21:0] dec_row_address_90;
+wire [21:0] dec_row_address_180;
+wire [21:0] inc_row_address_270;
 wire [34:0] start_address_write_row_90;
 wire [34:0] start_address_write_row_180;
 wire [32:0] start_address_write_col_180;
@@ -115,13 +132,25 @@ assign is_last_height_and_width = (height_div_by_8_is_reached && width_div_by_8_
 assign pad_signal_to_dma = pad_height | pad_width;
 assign ahb_htrans_idle = (beat_count > 5)? 1 : 0;
 
-assign height_mul_4 = I_CS_HEIGHT << 2; //(I_CS_HEIGHT << 1) + I_CS_HEIGHT;
-assign width_mul_4 = I_CS_WIDTH << 2; //(I_CS_WIDTH << 1) + I_CS_WIDTH;
-assign dec_row_address_90 = height_mul_4 * 6;//<< 3;
-assign dec_row_address_180 = width_mul_4 * 6;//<< 3;
+assign height_mul_3 = (I_CS_HEIGHT << 1) + I_CS_HEIGHT;//I_CS_HEIGHT << 2; //(I_CS_HEIGHT << 1) + I_CS_HEIGHT;
+assign height_mask_3 = height_mul_3 & 17'h0_0003;
+assign height_mask_7 = height_mul_3 & 17'h0_0007;
+assign height_diff_4 = 3'h4 - height_mask_3[2:0];
+assign height_diff_8 = 4'h8 - height_mul_3;
+assign height_read_correct = (height_mask_3[1:0] == 2'b00)? height_mul_3 : height_mul_3 + {15'h0000, height_diff_4};
+assign height_write_correct = (height_mask_7[2:0] == 3'b000)? height_mul_3 : (tmp_new_height << 1) + tmp_new_height;
+assign width_mul_3 = (I_CS_WIDTH << 1) + I_CS_WIDTH;//I_CS_WIDTH << 2; //(I_CS_WIDTH << 1) + I_CS_WIDTH;
+assign width_mask_3 = width_mul_3 & 17'h0_0003;
+assign width_mask_7 = width_mul_3 & 17'h0_0007;
+assign width_diff_4 = 3'h4 - width_mask_3[2:0];
+assign width_diff_8 = 4'h8 - width_mul_3;
+assign width_read_correct = (width_mask_3[1:0] == 2'b00)? width_mul_3 : width_mul_3 + {15'h0000, width_diff_4};
+assign width_write_correct = (width_mask_3[1:0] == 2'b00)? width_mul_3 : (tmp_new_width << 1) + tmp_new_width;
+assign dec_row_address_90 = height_write_correct << 3;
+assign dec_row_address_180 = width_write_correct << 3;
 assign inc_row_address_270 = dec_row_address_90;
-assign start_address_write_row_90 = total_size_mul_3 - {13'h000, dec_row_address_90};
-assign start_address_write_row_180 = total_size_mul_3 - {13'h000, dec_row_address_180};
+assign start_address_write_row_90 = total_size_mul_3 - {12'h000, dec_row_address_90};
+assign start_address_write_row_180 = total_size_mul_3 - {12'h000, dec_row_address_180};
 assign start_address_write_col_180 = width_div_by_8 * 13'h0018;
 assign start_address_write_col_270 = height_div_by_8 * 13'h0018;
 assign total_size = new_height_to_reg[15:0] * new_width_to_reg[15:0];
@@ -287,7 +316,7 @@ always @(posedge I_CS_HCLK)
 		    read_row_address <= 33'h0_0000_0000;
 		else 
 		    if (beat_count == 3'h7)
-			read_row_address <= read_row_address[31:0] + {14'h0000, width_mul_4};
+			read_row_address <= read_row_address[31:0] + {13'h0000, width_read_correct};
 		    else 
 			read_row_address <= read_row_address;
 	    P_WRITE:
@@ -329,7 +358,7 @@ always @(posedge I_CS_HCLK)
 		    write_row_0_deg_address <= 33'h0_0000_0000;
 		else 
 		    if (beat_count == 3'h7)
-			write_row_0_deg_address <= write_row_0_deg_address[31:0] + {14'h0000, width_mul_4};
+			write_row_0_deg_address <= write_row_0_deg_address[31:0] + {13'h0000, width_write_correct};
 		    else 
 			write_row_0_deg_address <= write_row_0_deg_address;
 	    default:
@@ -373,7 +402,7 @@ always @(posedge I_CS_HCLK)
 		    if (zero_width)
 			write_base_90_deg_address <= start_address_write_row_90[32:0];
 		    else 
-			write_base_90_deg_address <= write_base_90_deg_address[31:0] - {11'h000, dec_row_address_90};
+			write_base_90_deg_address <= write_base_90_deg_address[31:0] - {10'h000, dec_row_address_90};
 		else 
 		    write_base_90_deg_address <= write_base_90_deg_address;
 	    default:
@@ -394,7 +423,7 @@ always @(posedge I_CS_HCLK)
 		    write_row_90_deg_address <= 33'h0_0000_0000;
 		else 
 		    if (beat_count == 3'h7)
-			write_row_90_deg_address <= write_row_90_deg_address[31:0] + {14'h0000, height_mul_4};
+			write_row_90_deg_address <= write_row_90_deg_address[31:0] + {13'h0000, height_write_correct};
 		    else 
 			write_row_90_deg_address <= write_row_90_deg_address;
 	    default:
@@ -443,7 +472,7 @@ always @(posedge I_CS_HCLK)
 			write_base_180_deg_address <= write_base_180_deg_address;
 		else 
 		    if (trans_count == 6'h3f)
-			write_base_180_deg_address <= write_base_180_deg_address[31:0] - {11'h000, dec_row_address_180};
+			write_base_180_deg_address <= write_base_180_deg_address[31:0] - {10'h000, dec_row_address_180};
 		    else 
 			write_base_180_deg_address <= write_base_180_deg_address;
 	    default:
@@ -464,7 +493,7 @@ always @(posedge I_CS_HCLK)
 		    write_row_180_deg_address <= 33'h0_0000_0000;
 		else 
 		    if (beat_count == 3'h7)
-			write_row_180_deg_address <= write_row_180_deg_address[31:0] + {14'h0000, width_mul_4};
+			write_row_180_deg_address <= write_row_180_deg_address[31:0] + {13'h0000, width_write_correct};
 		    else 
 			write_row_180_deg_address <= write_row_180_deg_address;
 	    default:
@@ -507,7 +536,7 @@ always @(posedge I_CS_HCLK)
 		    if (zero_width)
 			write_base_270_deg_address <= 33'h0_0000_0000;
 		    else 
-			write_base_270_deg_address <= write_base_270_deg_address[31:0] + {11'h000, inc_row_address_270}; 
+			write_base_270_deg_address <= write_base_270_deg_address[31:0] + {10'h000, inc_row_address_270}; 
 		else 
 		    write_base_270_deg_address <= write_base_270_deg_address;
 	    default:

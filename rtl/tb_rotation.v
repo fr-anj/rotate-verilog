@@ -97,9 +97,9 @@ module tb_rotation ();
 
 integer image;
 integer new_image;
-integer count;
-
-    integer check, index;
+reg [5:0] check;
+reg [31:0] check_div;
+    
     reg [31:0] data_read;
     reg [15:0] height;
     reg [15:0] width;
@@ -133,6 +133,8 @@ task initialize;
     I_HRESET_N <= 1;
     I_PCLK <= 0;
     I_HCLK <= 0;
+    check <= 0;
+    check_div <= 0;
 endtask
 
 task hard_reset ();
@@ -207,9 +209,6 @@ function integer delay (integer new_height, integer new_width);
     delay = write_delay * 2;
 endfunction
 
-string input_file = "./input/input.bmp";
-string output_file = "./output/output.bmp";
-string header;
 initial begin
     $vcdplusmemon;
     $vcdpluson;
@@ -217,31 +216,7 @@ initial begin
     $display("\n\n================================================");
     $display("===============start simulation=================");
 
-    /*image = $fopen(file, "r");
-    new_image = $fopen(new_file, "w");
-    if (image == 0) 
-        begin
-            $display("ERROR in reading file.. file does not exist o__O\n");
-            $display("===============failed simulation================");
-            $display("================================================\n");
-            $finish; 
-        end
-    else 
-        $display("reading file..");
-
-    if (new_image == 0)
-        begin
-            $display("ERROR in creating file..\n");
-            $display("===============failed simulation================");
-            $display("================================================\n");
-            $finish; 
-        end 
-    else 
-        $display("writing file..");*/
-
-    //initialize all inputs
     initialize();
-
     hard_reset();
 
     //####################################################################<<
@@ -251,14 +226,22 @@ initial begin
     * uncomment scenarios to run
     * ---------------------------------------*/
 
+    $display ("==start time==");
+    $system("date");
+    $display ("running test scenario");
+    set_image_properties(
+        .height(128), 
+        .width(128), 
+        .degrees(`rotate_180_degrees), 
+        .direction(`rotate_direction_ccw));
     //scenario 1000--------------------------
     //---------------------------------------
-    $display ("running scenario 1000");
-    set_image_properties(
-        .height(`min_input_image_height), 
-        .width(`min_input_image_width), 
-        .degrees(`rotate_0_degrees), 
-        .direction(`rotate_direction_cw));
+    //$display ("running scenario 1000");
+    //set_image_properties(
+    //    .height(`min_input_image_height), 
+    //    .width(`min_input_image_width), 
+    //    .degrees(`rotate_0_degrees), 
+    //    .direction(`rotate_direction_cw));
     //@(posedge I_PCLK) I_DMA_HGRANT <= `assert_hgrant;
     //ready_ahb (1, 1);
 
@@ -294,7 +277,7 @@ initial begin
     //set_image_properties(
     //    .height(`max_input_image_height),
     //    .width(`min_input_image_width),
-    //    .degrees(`rotate_270_degrees) 
+    //    .degrees(`rotate_270_degrees),
     //    .direction(`rotate_direction_cw));
     //write_apb(p_start, 1);
     //read_apb(p_start);
@@ -307,7 +290,7 @@ initial begin
     //set_image_properties(
     //    .height(`max_input_image_height),
     //    .width(`mid_input_image_width),
-    //    .degrees(`rotate_90_degrees) 
+    //    .degrees(`rotate_90_degrees), 
     //    .direction(`rotate_direction_ccw));
     //write_apb(p_start, 1);
     //read_apb(p_start);
@@ -383,8 +366,8 @@ initial begin
     //---------------------------------------
     //$display ("running scenario 1010");
     //set_image_properties(
-    //    .height(6144),
-    //    .width(16),
+    //    .height(16),
+    //    .width(128),
     //    .degrees(`rotate_90_degrees) 
     //    .direction(`rotate_direction_ccw));
     //write_apb(p_start, 1);
@@ -468,138 +451,95 @@ initial begin
     //(O_DMA_HBUSREQ) @(posedge I_HCLK) grant_ahb(1, 1);
     //####################################################################>>
 
-    read_apb(`dma_dst_img);
-    @(posedge I_PCLK)offset <= O_REG_PRDATA;
-    read_apb(`rot_img_new_h);
-    @(posedge I_PCLK) new_height <= O_REG_PRDATA[15:0];
-    read_apb(`rot_img_new_w);
-    @(posedge I_PCLK) new_width <= O_REG_PRDATA[15:0];
-    ready_ahb(1, 1);
+    //read_apb(`dma_dst_img);
+    //@(posedge I_PCLK)offset <= O_REG_PRDATA;
+    //read_apb(`rot_img_new_h);
+    //@(posedge I_PCLK) new_height <= O_REG_PRDATA[15:0];
+    //read_apb(`rot_img_new_w);
+    //@(posedge I_PCLK) new_width <= O_REG_PRDATA[15:0];
+    //ready_ahb(1, 1);
     
-//fork //<<<
-
-    //####################################################################<<
-    //READ IMAGE #########################################################
-    begin
-    index = `bmp_header_size;
-    image = $fopen(input_file, "r");
-    new_image = $fopen(output_file, "wb");
-
-    if (!$feof(image)) 
-	$display("successfuly opened file\nreading file..\n\nInput Image Properties:");
-    else
-	begin
-	    $display ("error loading file\nending simulation..");
-	    $fclose(image);
-	    #1;
-	    $finish;
-	end
-
-    if (!$feof(new_image)) 
-	$display("successfuly created file\nwriting to file..");
-    else
-	begin
-	    $display ("error creating file\nending simulation..");
-	    $fclose(new_image);
-	    #1;
-	    $finish;
-	end
-
-    check = $fgets(image, `bmp_header_size, header);
-    check = $fseek(image, 22, 0);
-    height = $fgetc(image);
-    $display("image height = %d",height); 
-    check = $fseek(image, 18, 0);
-    width = $fgetc(image);
-    $display("image width = %d\n",width); 
-
 	write_apb(p_start, 1);
 	read_apb(p_start);
+end
 
-    //while (!$feof(image)) 
-    //@(posedge I_HCLK) begin
-    //    if (!O_DMA_HWRITE)
-    //        begin
-    //    	$display("address = %x data = %x", O_DMA_HADDR, I_DMA_HRDATA);
-    //    	check <= $fseek(image, O_DMA_HADDR + `bmp_header_size, 0);
-    //    	I_DMA_HRDATA[7:0] <= $fgetc(image);
-    //    	check <= $fseek(image, O_DMA_HADDR + 1 + `bmp_header_size, 0);
-    //    	I_DMA_HRDATA[15:8] <= $fgetc(image);
-    //    	check <= $fseek(image, O_DMA_HADDR + 2 + `bmp_header_size, 0);
-    //    	I_DMA_HRDATA[23:16] <= $fgetc(image);
-    //    	check <= $fseek(image, O_DMA_HADDR + 3 + `bmp_header_size, 0);
-    //    	I_DMA_HRDATA[31:24] <= $fgetc(image);
-    //        end
-    //    else 
-    //        begin
-    //    	check <= $fseek(new_image, O_DMA_HADDR, 0);//+ `bmp_header_size, 0);
-    //    	$fwrite(new_image, "%c", O_DMA_HWDATA[7:0]);
-    //    	check <= $fseek(new_image, O_DMA_HADDR + 1, 0); //+ `bmp_header_size, 0);
-    //    	$fwrite(new_image, "%c", O_DMA_HWDATA[15:8]);
-    //    	check <= $fseek(new_image, O_DMA_HADDR + 2, 0); //+ `bmp_header_size, 0);
-    //    	$fwrite(new_image, "%c", O_DMA_HWDATA[23:16]);
-    //    	check <= $fseek(new_image, O_DMA_HADDR + 3, 0); //+ `bmp_header_size, 0);
-    //    	$fwrite(new_image, "%c", O_DMA_HWDATA[31:24]);
-    //        end
-    //end
-
-    //$display("done reading file\n");
-    //$fclose(image);
-    //$fclose(new_image);
-    end
-    //####################################################################>>
-
-    //####################################################################<<
-    //CREATE OUTPUT IMAGE ################################################
-//    begin
-//    new_image = $fopen(output_file, "w");
+//initial begin
+//    int wfp, r;
+//    wfp = $fopen("out.txt", "w");
 //
-//    if (!$feof(new_image))
-//	$display("successfully created new file\nwriting to file..\n\nOutput Image Properties:");
-//    else 
-//	begin
-//	    $display ("error creating file\nending simulation..");
-//	    $fclose(image);
-//	    #1;
-//	    $finish;
+//    //TODO: read height and width then create blank file then 
+//    forever begin :killthis
+//	@(posedge I_HCLK);
+//	if (O_DMA_HWRITE) begin
+//	//    r = $fseek(wfp, O_DMA_HADDR, 0);
+//	    $fwrite (wfp, "%u", O_DMA_HWDATA);
 //	end
-//   
-//    $display("image height = %d\nimage width = %d\n",new_height,new_width);
-//    //TODO: make sure to read register DMA_DST_IMG for the 
-//    //      $fseek offset
-//    $fwrite(new_image, "%s", header);
-//
-//    while (!O_INTR_DONE) begin
-//        if (O_DMA_HWRITE)
-//            @(posedge I_HCLK) begin
-//		$display ("write: %d", check_write);
-//        	check <= $fseek(new_image, O_DMA_HADDR + `bmp_header_size, 0);
-//        	$fwrite(new_image, "%c", O_DMA_HWDATA[7:0]);
-//        	check <= $fseek(new_image, O_DMA_HADDR + 1 + `bmp_header_size, 0);
-//        	$fwrite(new_image, "%c", O_DMA_HWDATA[7:0]);
-//        	check <= $fseek(new_image, O_DMA_HADDR + 2 + `bmp_header_size, 0);
-//        	$fwrite(new_image, "%c", O_DMA_HWDATA[7:0]);
-//        	check <= $fseek(new_image, O_DMA_HADDR + 3 + `bmp_header_size, 0);
-//        	$fwrite(new_image, "%c", O_DMA_HWDATA[7:0]);
-//		check_write <= check_write[14:0] + 1;
-//            end
-//        else 
-//            check <= 0;
+//	if (O_INTR_DONE) begin
+//	    disable killthis;
+//	end
 //    end
-//
-//    $display("done creating output image");
-//    $fclose(new_image);
+//    $fclose(wfp);
+//end
+
+initial begin
+    int wfp, r, i, total;
+    reg [31:0] buff;
+    wfp = $fopen("lena.txt", "wb");
+    total = 192;
+    forever begin :killthis
+	@(posedge I_HCLK);
+	if (O_DMA_HWRITE && (O_DMA_HTRANS != 0)) begin
+	    buff <= O_DMA_HADDR;
+	    r <= $fseek(wfp, buff, 0);
+	    $fwrite(wfp,"%u", O_DMA_HWDATA);
+	end
+	if (O_INTR_DONE) begin
+	    disable killthis;
+	end
+	r <= $fseek(wfp, buff, 0);
+	$fwrite(wfp,"%u", O_DMA_HWDATA);
+    end
+    $fclose(wfp);
+end
+
+//initial begin
+//    int wfp, r, i, total;
+//    reg [31:0] buff;
+//    wfp = $fopen("out3.txt", "wb");
+//    i = 0;
+//    buff = 0;
+//    forever begin :killthis
+//	@(posedge I_HCLK);
+//	if (O_DMA_HWRITE && (O_DMA_HTRANS != 0)) begin
+//	    buff <= O_DMA_HWDATA;
+//	    $fdisplay(wfp,"%d%c%c%c%c", i,buff[7:0],buff[15:8],buff[23:16],buff[31:24]);
+//	    i = i + 1;
+//	end
+//	if (O_INTR_DONE) begin
+//	    disable killthis;
+//	end
 //    end
-    //####################################################################>>
+//    $fclose(wfp);
+//end
 
-//join //>>>
+initial begin
+    int rfp, r;
+    rfp = $fopen("./input/pac16.bmp", "r");
 
-
-    $display("================end simulation==================");
-    $display("================================================\n");
-    /*$fclose(image);
-    $fclose(new_image);*/
-    
+    forever begin :killthis 
+	@(posedge I_HCLK);
+	if (I_DMA_HGRANT && (O_DMA_HTRANS != 0) && !O_DMA_HWRITE) begin
+	    r = $fseek(rfp, O_DMA_HADDR + 54, 0);
+	    I_DMA_HRDATA[7:0] = $fgetc(rfp);
+	    I_DMA_HRDATA[15:8] = $fgetc(rfp);
+	    I_DMA_HRDATA[23:16] = $fgetc(rfp);
+	    I_DMA_HRDATA[31:24] = $fgetc(rfp);
+	end
+	if (O_INTR_DONE) begin
+	    disable killthis;	
+	end
+    end
+    $fclose(rfp);
 end
 
 always @(posedge I_HCLK)
@@ -621,72 +561,28 @@ always @(posedge I_HCLK)
 	    I_DMA_HREADY <= I_DMA_HREADY;
 
 always @(posedge I_HCLK)
-    if (O_INTR_DONE)
-	#300 $finish;
+    if (check == 6'h3f && I_DMA_HGRANT) begin
+	check_div <= check_div + 1;
+	//	$display ("%0d",check_div);
+	if (check_div[8:0] == 0)
+	$display("@%0d %0d", $time,check_div); 
+    end
     else 
-	#300 $display ("====ongoing test====");
+	check_div <= check_div;
 
-always @(*)
-    if (!$feof(image) || O_INTR_DONE) begin
+always @(posedge I_HCLK)
+    if (I_DMA_HGRANT && (O_DMA_HTRANS != 0) && O_DMA_HWRITE) begin
+	check <= check + 1;
+    end
+    else 
+	check <= check;
 
-    //while (!$feof(image)) 
-    //@(posedge I_HCLK) begin
-        if (!O_DMA_HWRITE)
-            begin
-        	$display("I address = %x data = %x", O_DMA_HADDR, I_DMA_HRDATA);
-        	check <= $fseek(image, O_DMA_HADDR + `bmp_header_size, 0);
-        	I_DMA_HRDATA[7:0] <= $fgetc(image);
-        	check <= $fseek(image, O_DMA_HADDR + 1 + `bmp_header_size, 0);
-        	I_DMA_HRDATA[15:8] <= $fgetc(image);
-        	check <= $fseek(image, O_DMA_HADDR + 2 + `bmp_header_size, 0);
-        	I_DMA_HRDATA[23:16] <= $fgetc(image);
-        	check <= $fseek(image, O_DMA_HADDR + 3 + `bmp_header_size, 0);
-        	I_DMA_HRDATA[31:24] <= $fgetc(image);
-            end
-        else 
-	    I_DMA_HRDATA <= 0;
+always @(posedge I_HCLK)
+    if (O_INTR_DONE) begin
+	$display ("==end time==");
+	$system("date");
+	$display("@%0d %0d", $time,check_div); 
+	#300 $finish;
     end
-    else begin
-	$fclose(image);
-    end
-
-always @(*)
-    if (!$feof(new_image) || O_INTR_DONE) begin
-	if (O_DMA_HWRITE)
-            begin
-        	$display("O address = %x data = %x", O_DMA_HADDR, O_DMA_HWDATA);
-        	check <= $fseek(new_image, O_DMA_HADDR, 0); //+ `bmp_header_size, 0);
-        	$fwrite(new_image, "%u", O_DMA_HWDATA);
-        	//check <= $fseek(new_image, O_DMA_HADDR + 1, 0); //+ `bmp_header_size, 0);
-        	//$fwrite(new_image, "%u", O_DMA_HWDATA[15:8]);
-        	//check <= $fseek(new_image, O_DMA_HADDR + 2, 0); //+ `bmp_header_size, 0);
-        	//$fwrite(new_image, "%u", O_DMA_HWDATA[23:16]);
-        	//check <= $fseek(new_image, O_DMA_HADDR + 3, 0); //+ `bmp_header_size, 0);
-        	//$fwrite(new_image, "%u", O_DMA_HWDATA[31:24]);
-            end
-	else 
-	    $monitor(O_DMA_HADDR);
-    end
-    else begin
-	$fclose(new_image);
-    end
-//always @(posedge I_HCLK) 
-//    if (!$feof(image) && (O_DMA_HTRANS != 0) && !O_DMA_HWRITE) begin
-//            $fscanf(image, "%d", I_DMA_HRDATA[7:0]);
-//            $fscanf(image, "%d", I_DMA_HRDATA[15:8]);
-//            $fscanf(image, "%d", I_DMA_HRDATA[23:16]);
-//            $fscanf(image, "%d", I_DMA_HRDATA[31:24]);
-//        end
-//    else 
-//            I_DMA_HRDATA <= I_DMA_HRDATA;
-//
-//always @(posedge I_HCLK)
-//    if (!O_INTR_DONE)
-//        if (O_DMA_HWRITE) begin
-//            $fdisplay(image, O_DMA_HWDATA[7:0]);
-//            $fdisplay(image, O_DMA_HWDATA[15:8]);
-//            $fdisplay(image, O_DMA_HWDATA[23:16]);
-//            $fdisplay(image, O_DMA_HWDATA[31:24]);
-//        end
 
 endmodule

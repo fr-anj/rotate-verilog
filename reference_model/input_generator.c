@@ -48,30 +48,11 @@ typedef struct IMAGE {
     unsigned char *b;
 }image;
 
-//global variables
-int g_height;
-int g_width;
-bmp_infoheader g_infoheader;
-bmp_fileheader g_fileheader;
-
 //function prototypes
 image * load_image (char *filename);
-void create_file (char *filename, image *img);
-
-void create_file (char *filename, image *img)
-{
-    FILE *output = NULL;
-    int i; 
-    
-    output = fopen(filename, "w+");
-
-    for (i = 0; i < g_infoheader.image_size; i += 3)
-    {
-        fprintf(output, "%x\n%x\n%x\n", img->b[i], img->g[i + 1], img->r[i + 2]);
-    }
-
-    fclose(output);
-}
+int image_height (char *filename);
+int image_width (char *filename);
+void generate (char *filename, image *img, int height, int width);
 
 int main(int argc, char const *argv[])
 {
@@ -100,7 +81,7 @@ int main(int argc, char const *argv[])
 
         img = load_image(filename); //extract rgb data 
 
-        create_file (new_filename, img); 
+        generate(new_filename, img, image_height(filename), image_width(filename)); 
 
 	return 0;
 }
@@ -138,25 +119,8 @@ image * load_image (char *filename)
 	if (fread(&infoheader, sizeof(bmp_infoheader), 1, buf) == 0)
 	    printf("infoheader error");
 
-	g_fileheader = fileheader;
-	g_infoheader = infoheader;
-
-	/*DEBUG
-	printf("input image:\n");
-	printf("height = %d\n",infoheader.height);
-	printf("width = %d\n",infoheader.width);
-	*/
 	image_size = infoheader.height * infoheader.width;
-	
-	g_height = infoheader.height;
-	g_width = infoheader.width;
-
-	/*DEBUG
-	printf("image size = %d\n",image_size);
-	*/
-
 	fseek(buf, fileheader.file_offset, SEEK_SET);
-	
 	imgbuf = malloc(infoheader.image_size);
 
 	if (fread(imgbuf, infoheader.image_size, sizeof(unsigned char), buf) == 0)
@@ -182,14 +146,6 @@ image * load_image (char *filename)
 	    }
 	}
 
-	/*DEBUG 
-	printf("%d vs %d\n",image_size, infoheader.image_size );
-
-	print_px(img, 0);
-	print_px(img, 1);
-	print_px(img, 2);
-	*/
-
 	if (img == NULL)
 	{
 		free(img);
@@ -198,6 +154,104 @@ image * load_image (char *filename)
 		return NULL;
 	}
 
+	fclose(buf);
+
 	return img;
 }
 
+int image_height (char *filename)
+{
+    FILE *buf;
+    buf = fopen(filename, "r");
+    bmp_fileheader fileheader;
+    bmp_infoheader infoheader;
+    
+    if (buf == NULL)
+    {
+	printf("%s\n", ERROR_NO_SUCH_FILE);
+	return 0;
+    }
+
+    if ((fread(&fileheader, sizeof(bmp_fileheader), 1, buf)) == 0)
+	printf("fileheader error");
+
+    if (fileheader.signature != 0x4d42)
+    {
+	    fclose(buf);
+	    printf("%s\n", ERROR_WRONG_IMAGE_FORMAT);
+	    return 0;		
+    }else 
+    {
+	printf("correct image format\n");
+    }
+
+    if (fread(&infoheader, sizeof(bmp_infoheader), 1, buf) == 0)
+    {	
+	printf("infoheader error");
+	return 0;
+    }
+    fclose(buf);
+    return infoheader.height;
+}
+
+int image_width (char *filename)
+{
+    FILE *buf;
+    buf = fopen(filename, "r");
+    bmp_fileheader fileheader;
+    bmp_infoheader infoheader;
+    
+    if (buf == NULL)
+    {
+	printf("%s\n", ERROR_NO_SUCH_FILE);
+	return 0;
+    }
+
+    if ((fread(&fileheader, sizeof(bmp_fileheader), 1, buf)) == 0)
+	printf("fileheader error");
+
+    if (fileheader.signature != 0x4d42)
+    {
+	    fclose(buf);
+	    printf("%s\n", ERROR_WRONG_IMAGE_FORMAT);
+	    return 0;		
+    }else 
+    {
+	printf("correct image format\n");
+    }
+
+    if (fread(&infoheader, sizeof(bmp_infoheader), 1, buf) == 0)
+    {	
+	printf("infoheader error");
+	return 0;
+    }
+    fclose (buf);
+    return infoheader.width;
+}
+
+void generate (char *filename, image *img, int height, int width)
+{
+    int total, i, index;
+    FILE *outbuf;
+    unsigned char *imgbuf;
+
+    total = height * width;
+    outbuf = fopen( filename, "w");
+    imgbuf = malloc(total);
+
+    printf("size: %d", total);
+    i = 0;
+    for (index = 0; index < total; index += 3)
+    {
+	imgbuf[index] = img->b[i];
+	imgbuf[index + 1] = img->g[i];
+	imgbuf[index + 2] = img->r[i];
+	i++;
+    }
+
+    if(fwrite(imgbuf, sizeof(unsigned char), total, outbuf) == 0)
+	printf("image write error");
+
+    fclose (outbuf);
+    free (imgbuf);
+}

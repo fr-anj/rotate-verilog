@@ -66,13 +66,11 @@ wire [4:0] COUNT;
 wire [2:0] SIZE;
 wire WRITE;
 wire CS_PAD;
-wire CP_PAD;
 
     apbif REGISTER_FILE (
     .O_APBIF_PRDATA(O_REG_PRDATA), //module output
     .O_APBIF_PREADY(O_REG_PREADY), //module output 
     .O_APBIF_DMA_SRC_IMG(SRC_IMG), //to dma
-    //.O_APBIF_DMA_DST_IMG(DST_IMG), //to dma
     .O_APBIF_ROT_IMG_H(IMG_H), //to core set 
     .O_APBIF_ROT_IMG_W(IMG_W), //to core set 
     .O_APBIF_ROT_IMG_MODE(IMG_MODE), //to core set and core pixel
@@ -155,12 +153,12 @@ wire CP_PAD;
     .I_DMA_CS_IMEM_PAD(CS_PAD), 
     .I_DMA_ADDR(ADDR), //from core set
     .I_DMA_HRDATA(I_DMA_HRDATA), // module input 
-    .I_DMA_PIXEL_OUT_ADDRR(PIXEL_OUT_ADDRR), //from core pixel
-    .I_DMA_PIXEL_OUT_ADDRG(PIXEL_OUT_ADDRG), //from core pixel
-    .I_DMA_PIXEL_OUT_ADDRB(PIXEL_OUT_ADDRB), //from core pixel
-    .I_DMA_PIXEL_IN_ADDRR(PIXEL_IN_ADDRR), //from core pixel
-    .I_DMA_PIXEL_IN_ADDRG(PIXEL_IN_ADDRG), //from core pixel
-    .I_DMA_PIXEL_IN_ADDRB(PIXEL_IN_ADDRB), //from core pixel
+    .I_DMA_PIXEL_OUT_ADDRR(PIXEL_IN_ADDRR), //from core pixel
+    .I_DMA_PIXEL_OUT_ADDRG(PIXEL_IN_ADDRG), //from core pixel
+    .I_DMA_PIXEL_OUT_ADDRB(PIXEL_IN_ADDRB), //from core pixel
+    .I_DMA_PIXEL_IN_ADDRR(PIXEL_OUT_ADDRR), //from core pixel
+    .I_DMA_PIXEL_IN_ADDRG(PIXEL_OUT_ADDRG), //from core pixel
+    .I_DMA_PIXEL_IN_ADDRB(PIXEL_OUT_ADDRB), //from core pixel
     .I_DMA_PIXEL_OUT_ADDR0(PIXEL_OUT_ADDR0), //from core pixel
     .I_DMA_PIXEL_OUT_ADDR1(PIXEL_OUT_ADDR1), //from core pixel
     .I_DMA_PIXEL_OUT_ADDR2(PIXEL_OUT_ADDR2), //from core pixel

@@ -98,7 +98,7 @@ void create_image (char *filename, image *img)
 	index++;
     }
 
-    if(fwrite(imgbuf, sizeof(unsigned int), g_infoheader.image_size, output) == 0)
+    if(fwrite(imgbuf, sizeof(unsigned char), g_infoheader.image_size, output) == 0)
 	printf("image write error");
 
     free(imgbuf);

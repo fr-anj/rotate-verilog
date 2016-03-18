@@ -17,7 +17,6 @@ module output_mem (
     input I_OMEM_HRESET_N,
     input I_OMEM_HCLK
 );
-
 integer i;
 
 reg [7:0] memory [191:0];
@@ -25,6 +24,16 @@ reg [7:0] output0;
 reg [7:0] output1;
 reg [7:0] output2;
 reg [7:0] output3;
+reg [23:0] buff;
+
+always @(posedge I_OMEM_HCLK)
+    if (!I_OMEM_HRESET_N)
+	buff <= 24'h00_0000;
+    else
+	if (I_OMEM_WRITE)
+	buff <= {I_OMEM_PIXEL_IN_ADDRR, I_OMEM_PIXEL_IN_ADDRG, I_OMEM_PIXEL_IN_ADDRB};
+	else
+	    buff <= buff;
 
 always @(posedge I_OMEM_HCLK)
     if (!I_OMEM_HRESET_N)
@@ -33,15 +42,15 @@ always @(posedge I_OMEM_HCLK)
     else 
         if (I_OMEM_WRITE)
             begin
-                memory[I_OMEM_PIXEL_IN_ADDRB] <= I_OMEM_PIXEL_B;
-                memory[I_OMEM_PIXEL_IN_ADDRG] <= I_OMEM_PIXEL_G;
-                memory[I_OMEM_PIXEL_IN_ADDRR] <= I_OMEM_PIXEL_R;
+                memory[buff[7:0]] <= I_OMEM_PIXEL_B;
+                memory[buff[15:8]] <= I_OMEM_PIXEL_G;
+                memory[buff[23:16]] <= I_OMEM_PIXEL_R;
             end
         else 
             begin
-                memory[I_OMEM_PIXEL_IN_ADDRB] <= memory[I_OMEM_PIXEL_IN_ADDRB];
-                memory[I_OMEM_PIXEL_IN_ADDRG] <= memory[I_OMEM_PIXEL_IN_ADDRG];
-                memory[I_OMEM_PIXEL_IN_ADDRR] <= memory[I_OMEM_PIXEL_IN_ADDRR];
+                memory[buff[7:0]] <= memory[I_OMEM_PIXEL_IN_ADDRB];
+                memory[buff[15:8]] <= memory[I_OMEM_PIXEL_IN_ADDRG];
+                memory[buff[23:16]] <= memory[I_OMEM_PIXEL_IN_ADDRR];
             end
 
 always @(posedge I_OMEM_HCLK)
@@ -96,10 +105,7 @@ always @(posedge I_OMEM_HCLK)
 	else 
 	    output3 <= memory[I_OMEM_PIXEL_OUT_ADDR3];
 
-always @(posedge I_OMEM_HCLK)
-    if (!I_OMEM_HRESET_N)
-	O_OMEM_WDATA <= 32'h00000000;
-    else 
-	O_OMEM_WDATA <= {output3,output2,output1,output0};
+always @(*)
+    O_OMEM_WDATA <= {output3,output2,output1,output0};
 
 endmodule
