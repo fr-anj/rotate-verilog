@@ -54,6 +54,7 @@ module tb_rotation ();
     wire [1:0] O_DMA_HTRANS;
     wire [2:0] O_DMA_HSIZE;
     wire [2:0] O_DMA_HBURST;
+    wire O_REG_PREADY;
     wire O_DMA_HBUSREQ;
     wire O_DMA_HWRITE;
     wire O_INTR_DONE;
@@ -73,6 +74,7 @@ module tb_rotation ();
 
     rotation ROT0 (
     .O_REG_PRDATA(O_REG_PRDATA),
+    .O_REG_PREADY(O_REG_PREADY),
     .O_DMA_HADDR(O_DMA_HADDR),
     .O_DMA_HWDATA(O_DMA_HWDATA),
     .O_DMA_HTRANS(O_DMA_HTRANS),

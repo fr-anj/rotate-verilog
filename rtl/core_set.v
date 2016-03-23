@@ -8,22 +8,18 @@ module core_set (
     output [4:0] O_CS_COUNT, //to dma
     output [2:0] O_CS_SIZE, //to dma
     output O_CS_WRITE, //to dma
-    output O_CS_IMEM_PAD, //to imem
     output O_CS_INTR_DONE, //to register file
     input [15:0] I_CS_HEIGHT,
     input [15:0] I_CS_WIDTH,
     input [1:0] I_CS_DEGREES,
     input I_CS_DMA_READY, //from dma - start transaction signal
     input I_CS_DIRECTION,
-    input I_CS_START,
+    //input I_CS_START,
     input I_CS_HRESET_N,
     input I_CS_RESET,
-    input I_CS_HCLK,
+    input I_CS_HCLK
 
     //interrupt registers
-    input I_CS_INTR_MASK,
-    output O_CS_BEF_MASK,
-    output O_CS_AFT_MASK
 );
 
 wire [13:0] height_div_by_8;
@@ -36,8 +32,6 @@ wire height_div_by_8_is_reached;
 wire width_div_by_8_is_reached;
 wire is_right_angle_rotate;
 wire is_last_height_and_width;
-wire pad_signal_to_dma;
-wire ahb_htrans_idle;
 
 wire [17:0] height_mul_3;
 wire [17:0] height_mask_3;
@@ -70,7 +64,6 @@ wire [33:0] tmp_ahb_0;
 wire [33:0] tmp_ahb_90;
 wire [33:0] tmp_ahb_180;
 wire [33:0] tmp_ahb_270;
-wire trans_count_64;
 
 reg [1:0] curr_state;
 reg [1:0] next_state;
@@ -104,8 +97,6 @@ reg [16:0] new_width_to_reg;
 //reg [4:0] transfer_count_to_dma;
 //reg [2:0] transfer_size_to_dma;
 reg write_signal_to_dma;
-reg pad_height;
-reg pad_width;
 reg interrupt;
 
 parameter //states
@@ -120,7 +111,7 @@ P_180_deg = 2'h2,
 P_270_deg = 2'h3;
 
 assign height_div_by_8 = (height_div_by_8_rem == 0)? I_CS_HEIGHT[15:3] - 13'h0001 : {1'b0, I_CS_HEIGHT[15:3]};
-assign width_div_by_8 = (width_div_by_8_rem == 0)? I_CS_WIDTH[15:3] - 13'h0001: {0'b0, I_CS_WIDTH[15:3]};
+assign width_div_by_8 = (width_div_by_8_rem == 0)? I_CS_WIDTH[15:3] - 13'h0001: {1'b0, I_CS_WIDTH[15:3]};
 assign height_div_by_8_rem = I_CS_HEIGHT[2:0];
 assign width_div_by_8_rem = I_CS_WIDTH[2:0];
 assign height_deficit_of_8 = 8 - {1'b0, height_div_by_8_rem};
@@ -129,8 +120,6 @@ assign height_div_by_8_is_reached = (height_div_by_8_count[12:0] < height_div_by
 assign width_div_by_8_is_reached = (width_div_by_8_count[12:0] < width_div_by_8[12:0])? 0 : 1;
 assign is_right_angle_rotate = ((I_CS_DEGREES == P_90_deg) || (I_CS_DEGREES == P_270_deg))? 1 : 0;
 assign is_last_height_and_width = (height_div_by_8_is_reached && width_div_by_8_is_reached)? 1 : 0;
-assign pad_signal_to_dma = pad_height | pad_width;
-assign ahb_htrans_idle = (beat_count > 5)? 1 : 0;
 
 assign height_mul_3 = (I_CS_HEIGHT << 1) + I_CS_HEIGHT;//I_CS_HEIGHT << 2; //(I_CS_HEIGHT << 1) + I_CS_HEIGHT;
 assign height_mask_3 = height_mul_3 & 17'h0_0003;
@@ -163,7 +152,6 @@ assign tmp_ahb_0 = write_row_0_deg_address + write_col_0_deg_address;
 assign tmp_ahb_90 = (write_row_90_deg_address[31:0] + write_col_90_deg_address[31:0]) + {1'b0, write_base_90_deg_address[31:0]};
 assign tmp_ahb_180 = (write_row_180_deg_address[31:0] + write_col_180_deg_address[31:0]) + {1'b0, write_base_180_deg_address[31:0]};
 assign tmp_ahb_270 = (write_row_270_deg_address[31:0] + write_col_270_deg_address[31:0]) + {1'b0, write_base_270_deg_address[31:0]};
-assign trans_count_64 = (trans_count_64 == 6'h3f)? 1 : 0;
 
 assign O_CS_ADDR = address_to_ahb[31:0];
 assign O_CS_DST_IMG = address_dst_to_reg[31:0];  
@@ -172,7 +160,6 @@ assign O_CS_NEW_W = new_width_to_reg[15:0];
 assign O_CS_COUNT = 5'h06;
 assign O_CS_SIZE = 3'h2;
 assign O_CS_WRITE = write_signal_to_dma;
-assign O_CS_IMEM_PAD = pad_signal_to_dma;
 assign O_CS_INTR_DONE = interrupt;
 
 always @(posedge I_CS_HCLK)
@@ -189,12 +176,15 @@ always @(*)
 	    else 
 		next_state = P_IDLE;
 	P_READ:
-	    if (trans_count == 6'h3f)
-		next_state = P_WRITE;
-	    else 
-		next_state = P_READ;
+	    if (interrupt || I_CS_RESET)
+		next_state = P_IDLE;
+	    else
+		if (trans_count == 6'h3f)
+		    next_state = P_WRITE;
+		else 
+		    next_state = P_READ;
 	P_WRITE:
-	    if ((trans_count_64) && is_last_height_and_width)
+	    if (I_CS_RESET)
 		next_state = P_IDLE;
 	    else
 		if (trans_count == 6'h3f)
@@ -216,9 +206,9 @@ always @(posedge I_CS_HCLK)
 		if (interrupt)
 		    trans_count <= 6'h00;
 		else
-		    if (!I_CS_DMA_READY)
-			trans_count <= trans_count;
-		    else 
+		 //    if (!I_CS_DMA_READY)
+			// trans_count <= trans_count;
+		 //    else 
 			trans_count <= trans_count + 1;
 	endcase
 
@@ -230,9 +220,9 @@ always @(posedge I_CS_HCLK)
 	    P_IDLE:
 		trans_div_by_8_count <= 3'h0;
 	    default:
-		if (interrupt)
-		    trans_div_by_8_count <= 3'h0;
-		else 
+		// if (interrupt)
+		//     trans_div_by_8_count <= 3'h0;
+		// else 
 		    if ((beat_count == 3'h7) && I_CS_DMA_READY)
 			trans_div_by_8_count <= trans_div_by_8_count + 1;
 		    else 
@@ -247,12 +237,12 @@ always @(posedge I_CS_HCLK)
 	    P_IDLE:
 		beat_count <= 3'h0;
 	    default:
-		if (interrupt)
-		    beat_count <= 3'h0;
-		else
-		    if (!I_CS_DMA_READY)
-			beat_count <= beat_count;
-		    else 
+		//if (interrupt)
+		//     beat_count <= 3'h0;
+		// else
+		//     if (!I_CS_DMA_READY)
+		// 	beat_count <= beat_count;
+		//     else 
 			beat_count <= beat_count + 1;
 	endcase
 
@@ -333,9 +323,6 @@ always @(posedge I_CS_HCLK)
 	    P_IDLE:
 		read_col_address <= 33'h0_0000_0000;
 	    P_READ:
-		if (width_div_by_8_is_reached && height_div_by_8_is_reached && (trans_count_64))
-		    read_col_address <= 33'h0_0000_0000;
-		else
 		    if (height_div_by_8_is_reached && (trans_count == 6'h3f))
 			read_col_address <= read_col_address[31:0] + 32'h0000_0018;
 		    else 
@@ -375,7 +362,7 @@ always @(posedge I_CS_HCLK)
 	    P_READ:
 		write_col_0_deg_address <= write_col_0_deg_address;
 	    P_WRITE:
-		if (zero_height && (trans_count == 6'h3f))
+		if (zero_height )//&& (trans_count == 6'h3f))
 		    //if (read_col_address == 33'h0_0000_0000)
 		    if (zero_width) 
 			write_col_0_deg_address <= 33'h0_0000_0000;
@@ -398,7 +385,7 @@ always @(posedge I_CS_HCLK)
 	    P_READ:
 		write_base_90_deg_address <= write_base_90_deg_address;
 	    P_WRITE:
-		if (zero_height && (trans_count == 6'h3f))
+		if (zero_height )//&& (trans_count == 6'h3f))
 		    if (zero_width)
 			write_base_90_deg_address <= start_address_write_row_90[32:0];
 		    else 
@@ -532,7 +519,7 @@ always @(posedge I_CS_HCLK)
 	    P_READ:
 		write_base_270_deg_address <= write_base_270_deg_address;
 	    P_WRITE:
-		if (zero_height && (trans_count == 6'h3f))
+		if (zero_height)// && (trans_count == 6'h3f))
 		    if (zero_width)
 			write_base_270_deg_address <= 33'h0_0000_0000;
 		    else 
@@ -557,9 +544,9 @@ always @(posedge I_CS_HCLK)
 		write_col_270_deg_address <= write_col_270_deg_address;
 	    P_WRITE:
 		if (zero_height)
-		    if (trans_count == 6'h3f)
-			write_col_270_deg_address <= start_address_write_col_270;
-		    else 
+		 //    if (trans_count == 6'h3f)
+			// write_col_270_deg_address <= start_address_write_col_270;
+		 //    else 
 			write_col_270_deg_address <= write_col_270_deg_address;
 		else 
 		    if (trans_count == 6'h3f)
@@ -649,48 +636,6 @@ always @(posedge I_CS_HCLK)
 	    default:
 		write_signal_to_dma <= 0;
 	endcase
-
-always @(*)
-    case (curr_state)
-	P_IDLE: 
-	    pad_height = 0;
-	P_READ:
-	    if (height_div_by_8_rem == 3'h0)
-		pad_height = 0;
-	    else 
-		if (height_div_by_8_is_reached)
-		    if ({1'b0, trans_div_by_8_count} >= height_div_by_8_rem)
-			pad_height = 1;
-		    else 
-			pad_height = 0;
-		else 
-		    pad_height = 0;
-	P_WRITE:
-	    pad_height = 0;
-	default:
-	    pad_height = 0;
-    endcase
-
-always @(*)
-    case (curr_state)
-	P_IDLE:
-	    pad_width = 0;
-	P_READ:
-	    if (width_div_by_8_rem == 3'h0)
-		pad_width = 0;
-	    else
-		if (width_div_by_8_is_reached)
-		    if ({1'b0, beat_count} >= width_div_by_8_rem)
-			pad_width = 1;
-		    else 
-			pad_width = 0;
-		else 
-		    pad_width = 0;
-	P_WRITE:
-	    pad_width = 0;
-	default:
-	    pad_width = 0;
-    endcase
 
 always@(posedge I_CS_HCLK)
     if (!I_CS_HRESET_N)

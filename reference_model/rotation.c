@@ -117,8 +117,6 @@ int main(int argc, char const *argv[])
 	image *img = NULL;
 	image *new_image = NULL;
 
-	bmp_infoheader infoheader;
-
 	//rotate <source_image> <destination_image> <degrees>
 	if (argc < 3)	
 	{
